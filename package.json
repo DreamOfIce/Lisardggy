@@ -1,27 +1,26 @@
 {
-  "name": "@dreamofice/ts-template",
-  "version": "1.0.0",
+  "name": "yggdrasil-server",
+  "version": "0.1.0",
+  "private": true,
   "description": "",
-  "keywords": [],
-  "homepage": "https://github.com/DreamOfIce/ts-template#readme",
+  "keywords": [
+    "minecraft",
+    "yggdrasil"
+  ],
+  "homepage": "https://github.com/DreamOfIce/YggdrasilServer#readme",
   "bugs": {
-    "url": "https://github.com/DreamOfIce/ts-template/issues"
+    "url": "https://github.com/DreamOfIce/YggdrasilServer/issues"
   },
   "license": "MIT",
   "author": "DreamOfIce",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DreamOfIce/ts-template.git"
+    "url": "git+https://github.com/DreamOfIce/YggdrasilServer.git"
   },
   "type": "module",
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.mjs",
   "types": "./dist/index.d.cts",
   "exports": {
-    ".": {
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.cjs"
-    },
+    ".": "./dist/index.mjs",
     "./package.json": "./package.json"
   },
   "publishConfig": {
@@ -60,6 +59,9 @@
       "version": "11.25.0",
       "onFail": "download"
     }
+  },
+  "engines": {
+    "node": ">=22.0.0"
   },
   "packageManager": "pnpm@11.25.0"
 }

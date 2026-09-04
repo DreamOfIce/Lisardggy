@@ -1,6 +1,6 @@
-# TSTemplate
+# YggdrasilServer
 
-TypeScript project template
+[Yggdrasil](https://github.com/yushijinhun/authlib-injector) server written in TypeScript
 
 ## License
 
