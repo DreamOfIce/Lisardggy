@@ -1,0 +1,65 @@
+{
+  "name": "@dreamofice/ts-template",
+  "version": "1.0.0",
+  "description": "",
+  "keywords": [],
+  "homepage": "https://github.com/DreamOfIce/ts-template#readme",
+  "bugs": {
+    "url": "https://github.com/DreamOfIce/ts-template/issues"
+  },
+  "license": "MIT",
+  "author": "DreamOfIce",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DreamOfIce/ts-template.git"
+  },
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.cjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.com"
+  },
+  "scripts": {
+    "build": "tsdown",
+    "fmt": "oxfmt",
+    "lint": "oxlint --fix",
+    "prepare": "husky",
+    "release": "release-it"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^21.2.2",
+    "@commitlint/config-conventional": "^21.2.2",
+    "@release-it/conventional-changelog": "^12.0.0",
+    "@tsconfig/node-lts": "^24.0.1",
+    "@tsconfig/strictest": "^2.0.8",
+    "@types/node": "^26.4.1",
+    "husky": "^9.1.7",
+    "nano-staged": "^1.0.2",
+    "oxfmt": "^0.66.0",
+    "oxlint": "^1.81.0",
+    "oxlint-tsgolint": "^7.0.2001",
+    "release-it": "^21.0.2",
+    "tsdown": "^0.22.14",
+    "typescript": "^7.0.2"
+  },
+  "nano-staged": {
+    "*": "pnpm fmt",
+    "*.{c,m}?{js,ts}": "pnpm lint"
+  },
+  "devEngines": {
+    "packageManager": {
+      "name": "pnpm",
+      "version": "11.25.0",
+      "onFail": "download"
+    }
+  },
+  "packageManager": "pnpm@11.25.0"
+}
