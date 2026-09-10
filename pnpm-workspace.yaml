@@ -1,1 +1,5 @@
 gitChecks: false
+overrides:
+  "@types/parse-path": "-"
+patchedDependencies:
+  pino-roll: patches/pino-roll.patch

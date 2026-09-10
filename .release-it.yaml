@@ -5,12 +5,15 @@ git:
   tag: true
   tagName: "v${version}"
   push: true
+
 github:
   release: true
+
 npm:
   publish: true
   publishPackageManager: pnpm
   skipChecks: true
+
 plugins:
   "@release-it/conventional-changelog":
     preset:

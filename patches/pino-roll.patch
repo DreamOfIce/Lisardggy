@@ -1,0 +1,37 @@
+diff --git a/package.json b/package.json
+index c2088e7d9d4f43ff6b55681ee942c17f38ccffe0..2c5ecc0e6d179b4e807a2103447f5998f0311f21 100644
+--- a/package.json
++++ b/package.json
+@@ -3,6 +3,7 @@
+   "version": "4.0.0",
+   "description": "A Pino transport that automatically rolls your log files",
+   "main": "pino-roll.js",
++  "types": "pino-roll.d.ts",
+   "scripts": {
+     "dev": "node --test --watch",
+     "lint": "eslint",
+diff --git apino-roll.d.ts b/pino-roll.d.ts
+new file mode 100644
+index 0000000000000000000000000000000000000000..2f9f451410c9965ad421a79d2409d8cdbbc2638f
+--- /dev/null
++++ b/pino-roll.d.ts
+@@ -0,0 +1,19 @@
++import type SonicBoom from "snoic-boom";
++import type { SonicBoomOpts } from "sonic-boom";
++
++export type RollFrequency = "weekly" | "daily" | "hourly";
++
++export interface PinoRollOptions extends Omit<SonicBoomOpts, "dest"> {
++  file: string | (() => string);
++  size?: number | string;
++  frequency?: RollFrequency | number;
++  extension?: string;
++  symlink?: boolean;
++  limit?: {
++    count?: number;
++    removeOtherLogFiles?: boolean;
++  };
++  dateFormat?: string;
++}
++const PinoRoll: (options: PinoRollOptions) => Promise<SonicBoom>;
++export default PinoRoll;
