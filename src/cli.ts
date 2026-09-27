@@ -1,31 +1,19 @@
+import { env, exit } from "node:process";
+
 import cac from "cac";
 import { cosmiconfig } from "cosmiconfig";
-import { isNonNullable, isPlainObject, paramCase, pick } from "cosmokit";
+import { paramCase, pick } from "cosmokit";
 
 import { name, version } from "../package.json";
 import { YggdrasilServer } from "./server";
+import { deepMerge, loadConfigFromEnv, loadEnvFiles, type DeepPartial } from "./utils";
 
 export interface CommandLineOptions extends YggdrasilServer.Config {
   config?: string;
+  env?: string | string[];
   managementApi?: YggdrasilServer.Config["managementAPI"];
   [k: string]: unknown;
 }
-
-export const mergeConfig = <T>(...configs: T[]): T => {
-  const result = configs.findLast(isNonNullable);
-  if (isPlainObject(result))
-    return Object.fromEntries(
-      Object.keys(result!).map((k) => [
-        k,
-        mergeConfig(
-          ...configs.map((c: T) =>
-            isPlainObject(c) ? (c as Record<string, unknown>)[k] : undefined,
-          ),
-        ),
-      ]),
-    ) as T;
-  else return result as T;
-};
 
 const configFileList = [
   `${name}.json`,
@@ -41,7 +29,9 @@ const configFileList = [
 
 const cli = cac(name).help().version(version);
 
-cli.option("-c, --config", "Specify a config file");
+cli
+  .option("-c, --config [filepath]", "Specify a configurstion file")
+  .option("-e, --env [filepath]", "Load environment variables from file(s)");
 
 Object.entries(YggdrasilServer.Config.dict!).forEach(([k, v]) =>
   cli.option(
@@ -50,33 +40,45 @@ Object.entries(YggdrasilServer.Config.dict!).forEach(([k, v]) =>
   ),
 );
 
-cli.command("", "Start Yggdrasil server").action(async (options: CommandLineOptions) => {
+cli.command("").action(() => {
+  cli.outputHelp();
+});
+
+cli.command("show-configs", "Show config schema and exit").action(() => {
+  console.log(YggdrasilServer.Config.toString());
+  exit(0);
+});
+
+cli.command("start", "Start Yggdrasil server").action(async (options: CommandLineOptions) => {
+  loadEnvFiles(options.env);
+
   if (options["managementApi"]) {
     options.managementAPI = options["managementApi"];
     Reflect.deleteProperty(options, "managementApi");
   }
-  console.debug("config from CLI:", options);
+  if (env["NODE_ENV"] === "debug") console.debug("config from CLI:", options);
   const configExplorer = cosmiconfig(name, { searchPlaces: configFileList });
-  const { config = {}, filepath } = ((await (options.config
+  const { config: fileConfig = {}, filepath } = ((await (options.config
     ? configExplorer.load(options.config)
     : configExplorer.search())) ?? {}) as {
-    config?: Partial<YggdrasilServer.Config>;
+    config?: DeepPartial<YggdrasilServer.Config>;
     filepath?: string;
   };
   if (filepath) {
     console.log(`Using configuration file ${filepath}`);
-    console.debug("config from file:", config);
+    if (env["NODE_ENV"] === "development") console.debug("config from file:", fileConfig);
   }
 
-  const mergedConfig = mergeConfig(
-    config,
-    pick(options, Object.keys(YggdrasilServer.Config.dict!)),
-  );
-  console.debug("merged config:", mergedConfig);
+  const envConfig = loadConfigFromEnv("YGGDRASIL_CONFIG", YggdrasilServer.Config) ?? {};
+  const cliConfig = pick(options, Object.keys(YggdrasilServer.Config.dict!));
+  const mergedConfig = deepMerge(cliConfig, envConfig, fileConfig);
+  if (env["NODE_ENV"] === "development") console.debug("merged config:", mergedConfig);
 
   console.log(`Starting Yggdrasil server v${version}...`);
   const server = new YggdrasilServer(mergedConfig);
   await server.start();
+  process.on("SIGINT", () => void server.stop());
+  process.on("SIGTERM", () => void server.stop());
 });
 
 cli.parse();

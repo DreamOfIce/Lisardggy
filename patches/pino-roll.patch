@@ -10,13 +10,13 @@ index c2088e7d9d4f43ff6b55681ee942c17f38ccffe0..2c5ecc0e6d179b4e807a2103447f5998
    "scripts": {
      "dev": "node --test --watch",
      "lint": "eslint",
-diff --git apino-roll.d.ts b/pino-roll.d.ts
+diff --git a/pino-roll.d.ts b/pino-roll.d.ts
 new file mode 100644
-index 0000000000000000000000000000000000000000..2f9f451410c9965ad421a79d2409d8cdbbc2638f
+index 0000000000000000000000000000000000000000..7f12f5cba7d4b67e70366d217869d251c76e8094
 --- /dev/null
 +++ b/pino-roll.d.ts
 @@ -0,0 +1,19 @@
-+import type SonicBoom from "snoic-boom";
++import type SonicBoom from "sonic-boom";
 +import type { SonicBoomOpts } from "sonic-boom";
 +
 +export type RollFrequency = "weekly" | "daily" | "hourly";

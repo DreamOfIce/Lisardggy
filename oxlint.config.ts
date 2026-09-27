@@ -142,7 +142,7 @@ export default defineConfig({
     "typescript/prefer-reduce-type-parameter": "error",
     "typescript/prefer-return-this-type": "error",
     "typescript/related-getter-setter-pairs": "error",
-    "typescript/require-await": "error",
+    "typescript/require-await": "off",
     "typescript/restrict-plus-operands": [
       "error",
       {

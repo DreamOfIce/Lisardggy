@@ -1,64 +1,43 @@
-import { omit } from "cosmokit";
 import Fastify, { type FastifyBaseLogger, type FastifyInstance } from "fastify";
-import type { TransportTargetOptions } from "pino";
-import type { PinoRollOptions } from "pino-roll";
+import { schemasteryPlugin, type SchemasteryTypeProvider } from "fastify-type-provider-schemastery";
 
 import { YggdrasilServerConfig } from "./config";
-import { databasePlugin } from "./database";
-import { sessionServer } from "./libs";
+import { errorHandler } from "./error";
+import { databasePlugin, jwtPlugin } from "./libs";
+import { registerRoutes } from "./routes";
+import { generateFastifyOptions, type DeepPartial } from "./utils";
 
 export class YggdrasilServer {
   public config: YggdrasilServer.Config;
   private server: FastifyInstance;
   private logger: FastifyBaseLogger;
-  constructor(config: Partial<YggdrasilServer.Config> = {}) {
+  constructor(config: DeepPartial<YggdrasilServer.Config> = {}) {
     //@ts-expect-error ts2345 Schemastery allow partial input
     this.config = new YggdrasilServer.Config(config);
 
-    const loggerOptions = {
-      level: "trace",
-      transport: {
-        targets: [] as TransportTargetOptions[],
-      },
-    };
+    this.server = Fastify(
+      generateFastifyOptions(this.config),
+    ).withTypeProvider<SchemasteryTypeProvider>();
 
-    if (this.config.logger.console.enabled) {
-      const { level, prettyPrint } = this.config.logger.console;
-      loggerOptions.transport.targets.push({
-        level,
-        target: prettyPrint ? "pino-pretty" : "pino/file",
-        options: {
-          destination: 1,
-        },
-      });
-    }
-    if (this.config.logger.file.enabled) {
-      const { level, path, roll } = this.config.logger.file;
-      const target: TransportTargetOptions<PinoRollOptions> = {
-        level,
-        target: "pino-roll",
-        options: {
-          file: path,
-          mkdir: true,
-          ...omit(roll, ["maxCount"]),
-        },
-      };
-      if (roll.maxCount) target.options!.limit = { count: roll.maxCount };
-      loggerOptions.transport.targets.push(target);
-    }
-    this.server = Fastify({ logger: loggerOptions });
-    this.logger = this.server.log.child({ label: "yggdrasil" });
-    this.logger.debug(this.config);
-    this.server.register(databasePlugin, { path: this.config.database.path });
-    this.server.register(sessionServer, {
-      prefix: "/sessionserver",
-      officalServerURL: this.config.officalServer.session,
-      passThrough: this.config.passThrough,
-    });
+    this.logger = this.server.log.child({}, { msgPrefix: "[Yggdrasil] " });
+    this.logger.debug(`server Configuration:\n%o`, this.config);
+    this.server
+      .register(databasePlugin, this.config.database)
+      .register(schemasteryPlugin)
+      .register(jwtPlugin, this.config.authServer.jwt);
+    registerRoutes(this.server, this.config);
+    this.server.setErrorHandler(errorHandler);
   }
+
   public async start() {
     const { host, port } = this.config;
+    this.logger.info(`Starting server on port ${port.toString()}...`);
     await this.server.listen({ host, port });
+  }
+
+  public async stop() {
+    this.logger.info("Stoping server...");
+    await this.server.close();
   }
 }
 

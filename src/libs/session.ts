@@ -1,10 +1,15 @@
-import type { FastifyInstance } from "fastify";
+import type { FastifyPluginAsync } from "fastify";
 
-export interface sessionServerOptions {
+export interface SessionServerOptions {
   passThrough: boolean;
   officalServerURL: string;
 }
 
-export const sessionServer = (fastify: FastifyInstance, options: sessionServerOptions) => {
-  fastify.post("/session/minecraft/join", () => {});
+export const sessionServer: FastifyPluginAsync<SessionServerOptions> = async (fastify, options) => {
+  fastify.register(
+    async (fastify) => {
+      fastify.post("/session/minecraft/join", () => {});
+    },
+    { prefix: "/sessionserver" },
+  );
 };

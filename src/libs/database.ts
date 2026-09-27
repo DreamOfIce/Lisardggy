@@ -1,0 +1,96 @@
+import { mkdir } from "node:fs/promises";
+import { dirname } from "node:path";
+
+import { defineProperty, Dict } from "cosmokit";
+import type { FastifyPluginAsync } from "fastify";
+import fp from "fastify-plugin";
+import type { Low } from "lowdb";
+import { JSONFilePreset } from "lowdb/node";
+
+import type { DatabaseOptions } from "../config";
+
+declare module "fastify" {
+  interface FastifyInstance {
+    database: Database;
+  }
+}
+
+export interface Database extends Low<DatabaseStructure> {
+  queryProfile: (this: Database, id: string) => ProfileData | undefined;
+  queryUser: (this: Database, username: string) => UserData | undefined;
+  queryUserByID: (this: Database, id: string) => UserData | undefined;
+}
+
+export const DATABASE_VERSION = 1;
+
+export interface YggdrasilInternalData {
+  version: number;
+}
+
+export interface UserData {
+  id: string;
+  email: string;
+  hashedPwd: string;
+  profiles: string[];
+  props: Dict<string>;
+  tokenSeq: number;
+  minSeq: number;
+}
+
+export interface ProfileData {
+  id: string;
+  name: string;
+  uid: string;
+  extProps: Dict<string>;
+  skin: {
+    lastUpdate: number;
+    uploadable: string[];
+    textures: {
+      [k: string]: { url: string; metadata: Dict<string> };
+    };
+  };
+}
+
+export interface DatabaseStructure {
+  user: UserData[];
+  profile: ProfileData[];
+  revocationList: Dict<number>;
+  yggdrasil: YggdrasilInternalData;
+}
+
+const defaultData: DatabaseStructure = {
+  user: [],
+  profile: [],
+  revocationList: {},
+  yggdrasil: {
+    version: DATABASE_VERSION,
+  },
+};
+
+const databaseHelpers: Partial<Database> = {
+  queryProfile(id) {
+    return this.data.profile.find(({ id: i }) => id === i);
+  },
+  queryUser(username) {
+    if (username.includes("@")) return this.data.user.find(({ email }) => email === username);
+    const profile = Object.values(this.data.profile).find(({ name }) => name === username);
+    if (!profile) return;
+    return this.data.user.find(({ id }) => id === profile.uid);
+  },
+  queryUserByID(_id) {
+    return this.data.user.find(({ id }) => id === _id);
+  },
+};
+
+const plugin: FastifyPluginAsync<DatabaseOptions> = async (instance, { path }) => {
+  await mkdir(dirname(path), { recursive: true });
+  const database = await JSONFilePreset(path, defaultData);
+  await database.write();
+  Object.entries(databaseHelpers).forEach(([method, func]) =>
+    defineProperty(database, method, func),
+  );
+  instance.decorate("database", database as Database);
+  instance.addHook("onClose", () => database.write());
+};
+
+export const databasePlugin = fp(plugin);
