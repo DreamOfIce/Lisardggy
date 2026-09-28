@@ -195,7 +195,7 @@ export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.objec
         Schema.transform(Schema.string(), (t) => parse(t)! / 1000),
         Schema.number(),
       ]).default(3600), // 1 hour
-      maxTokens: Schema.natural().default(1),
+      maxTokens: Schema.natural().min(1).default(30),
       publicKey: Schema.string(),
       publicKeyPath: Schema.string().default(join(cwd(), "data", "public.key")),
       privateKey: Schema.string(),
