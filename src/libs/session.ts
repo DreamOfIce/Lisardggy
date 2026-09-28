@@ -1,11 +1,8 @@
 import type { FastifyPluginAsync } from "fastify";
 
-export interface SessionServerOptions {
-  passThrough: boolean;
-  officalServerURL: string;
-}
+import type { YggdrasilServerConfig } from "../config";
 
-export const sessionServer: FastifyPluginAsync<SessionServerOptions> = async (fastify, options) => {
+export const sessionServer: FastifyPluginAsync<YggdrasilServerConfig> = async (fastify, config) => {
   fastify.register(
     async (fastify) => {
       fastify.post("/session/minecraft/join", () => {});

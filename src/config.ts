@@ -75,17 +75,18 @@ export interface YggdrasilServerConfig {
   database: DatabaseOptions;
   logger: LoggerOptions;
   managementAPI: false | { allow: (string | RegExp)[] };
-  officalServer: {
-    profile: string;
-    session: string;
-  };
-  passThrough: boolean;
+  passThrough:
+    | false
+    | {
+        apiServer: string;
+        sessionServer: string;
+      };
   serverInfo: {
     name: string;
     homepage?: string;
     register?: string;
   };
-  authServer: AuthServerOptions;
+  auth: AuthServerOptions;
 }
 
 const defaultLoggerConfig = {
@@ -166,17 +167,19 @@ export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.objec
   ])
     .default(false)
     .description("Management API options"),
-  officalServer: Schema.object({
-    profile: Schema.string().default("https://api.mojang.com"),
-    session: Schema.string().default("https://sessionserver.mojang.com"),
-  }).description("Custom URLs of Mojang auth server"),
-  passThrough: Schema.boolean().description("Pass through unknown account to Mojang auth server"),
+  passThrough: Schema.union([
+    Schema.const(false),
+    Schema.object({
+      apiServer: Schema.string().default("https://api.mojang.com"),
+      sessionServer: Schema.string().default("https://sessionserver.mojang.com"),
+    }),
+  ]).description("Pass through unknown account to Mojang auth server"),
   serverInfo: Schema.object({
     name: Schema.string().default("Yet Another Yggdrasil Server"),
     homepage: Schema.string(),
     register: Schema.string(),
   }).description("Server infos displayed to users"),
-  authServer: Schema.object({
+  auth: Schema.object({
     argon2: Schema.object({
       memoryCost: Schema.natural().min(1).default(32768),
       parallelism: Schema.natural().min(1).default(1),

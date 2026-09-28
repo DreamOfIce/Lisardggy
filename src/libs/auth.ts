@@ -2,7 +2,7 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import type { Dict } from "cosmokit";
 import type { FastifyPluginAsync } from "fastify";
 
-import type { AuthServerOptions } from "../config";
+import type { YggdrasilServerConfig } from "../config";
 import { YggdrasilErrors, YggdrasilServerError } from "../error";
 import { API, type Profile } from "../schemas";
 import {
@@ -12,11 +12,11 @@ import {
   userData2User,
   type FastifyInstance,
 } from "../utils";
-import { ProfileData } from "./database";
+import type { ProfileData } from "./database";
 
-export const authServer: FastifyPluginAsync<AuthServerOptions> = async (
+export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
   fastify: FastifyInstance,
-  options,
+  config,
 ) => {
   const logger = fastify.log.child({}, { msgPrefix: "[auth] " });
   fastify.register(fastifyRateLimit, {
@@ -25,8 +25,8 @@ export const authServer: FastifyPluginAsync<AuthServerOptions> = async (
     global: false,
     hook: "preHandler",
     keyGenerator: (req) => (req.body as Dict<string>)["username"]!,
-    max: options.rateLimit.max,
-    timeWindow: options.rateLimit.timeWindow,
+    max: config.auth.rateLimit.max,
+    timeWindow: config.auth.rateLimit.timeWindow,
   });
 
   fastify.register(
@@ -50,6 +50,10 @@ export const authServer: FastifyPluginAsync<AuthServerOptions> = async (
           if (!user || !(await Argon2.verify(password, user.hashedPwd))) {
             throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidCredential);
           }
+          if (!Argon2.compareOptions(password, config)) {
+            user.hashedPwd = await Argon2.hash(password, config);
+            await fastify.database.write();
+          }
           const availableProfiles = user.profiles.map((id) => {
             const p = fastify.database.queryProfile(id);
             if (p === undefined) throw new YggdrasilServerError(`Failed to query profile ${id}`);
@@ -65,7 +69,7 @@ export const authServer: FastifyPluginAsync<AuthServerOptions> = async (
             uid: user.id,
           });
 
-          logger.debug(`User ${user.email} logs in`);
+          logger.debug(`User ${user.id} logs in`);
           logger.trace("client token: %s", clientToken);
           logger.trace("access token: %s", accessToken);
           logger.trace("selected profile: %s", selectedProfile?.id ?? "none");
@@ -180,10 +184,14 @@ export const authServer: FastifyPluginAsync<AuthServerOptions> = async (
           if (!user || !(await Argon2.verify(password, user.hashedPwd))) {
             throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidCredential);
           }
-          await fastify.database.update((db) => {
-            db.user.find(({ email }) => email === user.email)!.minSeq = user.tokenSeq;
-          });
-          logger.debug(`User ${user.email} signs out`);
+
+          if (!Argon2.compareOptions(password, config)) {
+            user.hashedPwd = await Argon2.hash(password, config);
+          }
+          user.minSeq = user.tokenSeq;
+          await fastify.database.write();
+
+          logger.debug(`User ${user.id} signs out`);
           return reply.code(204).send();
         },
       );

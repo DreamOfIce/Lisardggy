@@ -181,6 +181,9 @@ importers:
       '@fastify/rate-limit':
         specifier: ^11.2.0
         version: 11.2.0
+      '@fastify/reply-from':
+        specifier: ^12.6.5
+        version: 12.6.5
       '@lukeed/ms':
         specifier: ^2.0.2
         version: 2.0.2
@@ -388,6 +391,9 @@ packages:
 
   '@fastify/rate-limit@11.2.0':
     resolution: {integrity: sha512-X7osJd4XSvMoejYrnJkSZYYjY1eNYoBqhjlzf1RakC2204qExFqZFTKj5+T7VuzA/iUI9Z3UoSqQRkB2HpG0oQ==}
+
+  '@fastify/reply-from@12.6.5':
+    resolution: {integrity: sha512-/4MP+iF6T2+UBEmVYveMU2Tbx3lR1Q7xsDo8GAGjNeQrLF/JqNRlOMhOksh8fXBA47KI8ifsIlUXYdMOUXGZNQ==}
 
   '@inquirer/ansi@2.0.8':
     resolution: {integrity: sha512-WpQM+Ti6Z40EFwwt+uL2p4UabT+W179zHp6HhLVOzfbwnVn05IPO/eXIZXGNqcT1jbQ15SujNLzQ39k4QPPxBQ==}
@@ -1653,6 +1659,9 @@ packages:
   exsolve@1.1.1:
     resolution: {integrity: sha512-9U/jZUgjnSGyntRr6y5Muu1MJcwFl6kPu7k8qLF0IMNfLqvw0NZ4nnVDq0RVoZ0RvCyumib4Ez3KYrVfilrw+g==}
 
+  fast-content-type-parse@3.0.0:
+    resolution: {integrity: sha512-ZvLdcY8P+N8mGQJahJV5G4U88CSvT1rP8ApL6uETe88MBXrBHAkZlSEySdUlyztF7ccb+Znos3TFqaepHxdhBg==}
+
   fast-copy@4.1.1:
     resolution: {integrity: sha512-A4QTJmuiztpGtr6AMeJts9R4hbj2ZBUwtOaKrG6rw2y7t6+IaJKjz5M3XDs8BUznxDH43FVc6A0y/gWlMl4UtA==}
 
@@ -2672,6 +2681,16 @@ snapshots:
       ip-address: 10.7.2
       toad-cache: 3.7.4
 
+  '@fastify/reply-from@12.6.5':
+    dependencies:
+      '@fastify/error': 4.2.0
+      end-of-stream: 1.4.5
+      fast-content-type-parse: 3.0.0
+      fast-querystring: 1.1.2
+      fastify-plugin: 6.0.0
+      toad-cache: 3.7.4
+      undici: 7.29.0
+
   '@inquirer/ansi@2.0.8': {}
 
   '@inquirer/checkbox@5.2.5(@types/node@26.6.3)':
@@ -3537,6 +3556,8 @@ snapshots:
   eta@4.6.0: {}
 
   exsolve@1.1.1: {}
+
+  fast-content-type-parse@3.0.0: {}
 
   fast-copy@4.1.1: {}
 
