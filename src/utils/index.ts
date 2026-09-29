@@ -1,4 +1,4 @@
-export * from "./argon2";
+export * from "./crypto";
 export * from "./config";
 export * from "./misc";
 export * from "./schema";

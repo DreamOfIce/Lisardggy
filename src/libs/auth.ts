@@ -50,7 +50,7 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
           if (!user || !(await Argon2.verify(password, user.hashedPwd))) {
             throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidCredential);
           }
-          if (!Argon2.compareOptions(password, config)) {
+          if (!Argon2.compareOptions(user.hashedPwd, config)) {
             user.hashedPwd = await Argon2.hash(password, config);
             await fastify.database.write();
           }

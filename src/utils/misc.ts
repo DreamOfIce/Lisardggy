@@ -1,12 +1,7 @@
-import { webcrypto } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
 import { relative } from "node:path";
-import { exit, loadEnvFile } from "node:process";
+import { loadEnvFile } from "node:process";
 
-import { arrayBufferToBase64 } from "cosmokit";
-import type { FastifyBaseLogger } from "fastify";
-
-import { AuthServerOptions } from "../config";
+import ipaddr from "ipaddr.js";
 
 export const deepMerge = <T>(...objects: T[]): T => {
   if (objects.length <= 1) {
@@ -32,17 +27,7 @@ export const deepMerge = <T>(...objects: T[]): T => {
   }
 };
 
-/**
- * export key in pem format
- */
-export const exportKey = async (key: CryptoKey): Promise<string> => {
-  if (key.type === "secret")
-    return arrayBufferToBase64(await webcrypto.subtle.exportKey("raw", key));
-  const body = arrayBufferToBase64(
-    await webcrypto.subtle.exportKey(key.type === "public" ? "spki" : "pkcs8", key),
-  );
-  return `-----BEGIN ${key.type.toUpperCase()} KEY-----\n${body}\n-----END ${key.type.toUpperCase()} KEY-----`;
-};
+export const formatIP = (ip: string) => ipaddr.process(ip).toString();
 
 export const isPlainObject = <T>(data: T): data is object & T =>
   typeof data === "object" && data !== null && !Array.isArray(data);
@@ -63,44 +48,4 @@ export const loadEnvFiles = (extraEnvFiles: string | string[] | undefined = []) 
     } catch {
       /* void */
     }
-};
-
-export const loadOrGenerateKeys = async (
-  { publicKey, publicKeyPath, privateKey, privateKeyPath }: AuthServerOptions["jwt"],
-  logger: FastifyBaseLogger,
-): Promise<[string, string]> => {
-  let pubKey = publicKey,
-    privKey = privateKey,
-    pubKeyNotExist = false,
-    privKeyNotExist = false;
-  try {
-    if (!pubKey && publicKeyPath) pubKey ??= await readFile(publicKeyPath, "ascii");
-  } catch (err) {
-    if (err instanceof Error && Reflect.get(err, "code") === "ENOENT") pubKeyNotExist = true;
-    else throw err;
-  }
-  try {
-    if (!privKey && privateKeyPath) privKey ??= await readFile(privateKeyPath, "ascii");
-  } catch (err) {
-    if (err instanceof Error && Reflect.get(err, "code") === "ENOENT") privKeyNotExist = true;
-    else throw err;
-  }
-  if (pubKey && privKey) {
-    return [pubKey, privKey];
-  } else if (pubKeyNotExist && privKeyNotExist) {
-    const { publicKey, privateKey } = (await webcrypto.subtle.generateKey("Ed25519", true, [
-      "sign",
-      "verify",
-    ])) as webcrypto.CryptoKeyPair;
-    const pubKey = await exportKey(publicKey);
-    const privKey = await exportKey(privateKey);
-    await writeFile(publicKeyPath!, pubKey, { mode: 400 });
-    await writeFile(privateKeyPath!, privKey, { mode: 400 });
-    logger.warn(`private key has been written to ${publicKeyPath!}`);
-    logger.warn(`private key has been written to ${privateKeyPath!}`);
-    return [pubKey, privKey];
-  } else {
-    logger.error(`JWT public key and/or private key not provided!`);
-    return exit(1);
-  }
 };

@@ -1,4 +1,3 @@
-import { FastifyError } from "@fastify/error";
 import type { Dict } from "cosmokit";
 
 import { API } from "./schemas";
@@ -83,25 +82,22 @@ export const errorHandler: Parameters<FastifyInstance["setErrorHandler"]>[0] = (
   reply,
 ) => {
   reply.log.error(error);
+  console.log(error);
   if (error instanceof YggdrasilServerError) {
     const { code, response } = error;
     return reply.code(code).send(response);
-  } else if (error instanceof FastifyError) {
+  } else if (error instanceof Error) {
     const response: API.Error = {
       error: error.name,
       errorMessage: error.message,
     };
     if (typeof error.cause === "string") response.cause = error.cause;
-    return reply.code(error.statusCode ?? 500).send(error);
+    return reply.code(Reflect.get(error, "statusCode") ?? 500).send(error);
   } else {
     const response: API.Error = {
       error: "Internal Server Error",
-      errorMessage:
-        error instanceof Error
-          ? error.message
-          : (error?.toString() ?? `Unexpected error(ReqID:${request.id})`),
+      errorMessage: typeof error === "string" ? error : `Unexpected error(ReqID:${request.id})`,
     };
-    if (error instanceof Error && typeof error.cause === "string") response.cause = error.cause;
     return reply.code(500).send(response);
   }
 };

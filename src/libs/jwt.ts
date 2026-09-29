@@ -5,9 +5,9 @@ import { type Bufferable, createDecoder, createSigner, createVerifier } from "fa
 import { type FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 
-import type { JWTOptions } from "../config";
+import type { YggdrasilServerConfig } from "../config";
 import { YggdrasilServerError, YggdrasilErrors } from "../error";
-import { loadOrGenerateKeys } from "../utils";
+import { Keys } from "../utils";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -24,6 +24,7 @@ export interface YggdrasilAccessTokenData {
   ctk: string; // client token
   exp: number;
   iat: number;
+  iss: string;
   jti: string;
   odt: number; // outdated at
   profile: {
@@ -41,13 +42,21 @@ export interface JWTSignOptions {
 }
 export interface JWTVerifyOptions {
   clientToken?: string | undefined;
+  pid?: string | undefined;
   uid?: string | undefined;
   allowOutdated?: boolean;
 }
 
-const plugin: FastifyPluginAsync<JWTOptions> = async (instance, options) => {
+const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { auth }) => {
+  const options = auth.jwt;
   const logger = instance.log.child({}, { msgPrefix: "[JWT] " });
-  const [publicKey, privateKey] = await loadOrGenerateKeys(options, logger);
+  let publicKey: CryptoKey, privateKey: CryptoKey;
+  try {
+    ({ publicKey, privateKey } = await Keys.loadKeys(options, "Ed25519", logger));
+  } catch (err) {
+    logger.error(err);
+    process.exit(1);
+  }
   const interval = setInterval(() => {
     const now = Date.now() / 1000;
     void instance.database.update(({ revocationList }) => {
@@ -61,8 +70,14 @@ const plugin: FastifyPluginAsync<JWTOptions> = async (instance, options) => {
   });
 
   const decoder = createDecoder();
-  const signer = createSigner({ key: privateKey });
-  const verifier = createVerifier({ key: publicKey });
+  const signer = createSigner({
+    key: await Keys.exportPEM(privateKey),
+    iss: instance.database.data.yggdrasil.instanceID,
+  });
+  const verifier = createVerifier({
+    key: await Keys.exportPEM(publicKey),
+    allowedIss: instance.database.data.yggdrasil.instanceID,
+  });
   const jwt = {
     decode(token: Bufferable) {
       return decoder(token) as YggdrasilAccessTokenData;
@@ -89,7 +104,10 @@ const plugin: FastifyPluginAsync<JWTOptions> = async (instance, options) => {
       await instance.database.write();
       return token;
     },
-    verify(token: Bufferable, { clientToken, uid, allowOutdated = false }: JWTVerifyOptions = {}) {
+    verify(
+      token: Bufferable,
+      { clientToken, pid, uid, allowOutdated = false }: JWTVerifyOptions = {},
+    ) {
       let decoded: YggdrasilAccessTokenData;
       try {
         decoded = verifier(token) as YggdrasilAccessTokenData;
@@ -106,8 +124,12 @@ const plugin: FastifyPluginAsync<JWTOptions> = async (instance, options) => {
         logger.debug("Verification failed: client token mismatch");
         throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
       }
-      if (uid && sub !== uid) {
+      if (uid !== undefined && sub !== uid) {
         logger.debug("Verification failed: user id mismatch");
+        throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+      }
+      if (pid !== undefined && profile.id !== pid) {
+        logger.debug("Verification failed: profile id mismatch");
         throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
       }
       const user = instance.database.queryUserByID(sub);
@@ -135,7 +157,7 @@ const plugin: FastifyPluginAsync<JWTOptions> = async (instance, options) => {
             code: 400,
           });
         }
-        if (uid && p.uid !== uid) {
+        if (uid !== undefined && p.uid !== uid) {
           logger.debug(`Verification failed: profile ${p.id} does not belong to ${uid}`);
           throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
         }

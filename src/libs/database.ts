@@ -7,7 +7,9 @@ import fp from "fastify-plugin";
 import type { Low } from "lowdb";
 import { JSONFilePreset } from "lowdb/node";
 
+import { name } from "../../package.json";
 import type { DatabaseOptions } from "../config";
+import { randomUUID } from "../utils";
 
 declare module "fastify" {
   interface FastifyInstance {
@@ -24,6 +26,7 @@ export interface Database extends Low<DatabaseStructure> {
 export const DATABASE_VERSION = 1;
 
 export interface YggdrasilInternalData {
+  instanceID: string;
   version: number;
 }
 
@@ -63,6 +66,7 @@ const defaultData: DatabaseStructure = {
   profile: [],
   revocationList: {},
   yggdrasil: {
+    instanceID: `${name}.${randomUUID()}`,
     version: DATABASE_VERSION,
   },
 };

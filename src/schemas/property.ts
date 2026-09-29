@@ -5,7 +5,7 @@ export const Property = Schema.object({
   value: Schema.string().required(),
 });
 
-export const PropertyWithSignature = Schema.union([
+export const PropertyWithSignature = Schema.intersect([
   Property,
   Schema.object({
     signature: Schema.string().required(),

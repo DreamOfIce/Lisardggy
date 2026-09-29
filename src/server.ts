@@ -24,7 +24,7 @@ export class YggdrasilServer {
     this.server
       .register(databasePlugin, this.config.database)
       .register(schemasteryPlugin)
-      .register(jwtPlugin, this.config.auth.jwt);
+      .register(jwtPlugin, this.config);
     registerRoutes(this.server, this.config);
     this.server.setErrorHandler(errorHandler);
   }
