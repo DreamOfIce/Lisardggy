@@ -36,7 +36,7 @@ export namespace Session {
     }
     export const Params: Schema<Params> = Schema.object({
       uuid: Schema.string()
-        .pattern(/[A-Ea-e0-9]{32}/)
+        .pattern(/[A-Fa-f0-9]{32}/)
         .min(32)
         .max(32)
         .required(),
