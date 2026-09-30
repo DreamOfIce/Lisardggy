@@ -7,15 +7,12 @@ import type { TransportTargetOptions } from "pino";
 import type { PinoRollOptions } from "pino-roll";
 import Schema from "schemastery";
 
-import { rewriteUrl } from "../rewrite";
 import { YggdrasilServer } from "../server";
 import { deepMerge } from "./misc";
 import type { DeepPartial } from "./types";
 
 export const generateFastifyOptions = (config: YggdrasilServer.Config) => {
-  const options: FastifyServerOptions = {
-    rewriteUrl,
-  };
+  const options: FastifyServerOptions = {};
 
   if (config.https) {
     Object.assign(options, {

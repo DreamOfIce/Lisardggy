@@ -11,7 +11,7 @@ export namespace Argon2 {
   export const compareOptions = (hashed: string, config: YggdrasilServerConfig) => {
     const parsedOptions = parseOptions(hashed);
     const currentOptions: ParsedHashOptions = {
-      ...config.authServer.argon2,
+      ...config.auth.argon2,
       algorithm: 2, // Algorithm.Argon2id
       version: 1, // Version.V0x13
       outputLen: 32,
@@ -22,7 +22,7 @@ export namespace Argon2 {
 
   export const hash = (password: string, config: YggdrasilServerConfig) =>
     _hash(password, {
-      ...config.authServer.argon2,
+      ...config.auth.argon2,
       algorithm: 2, // Algorithm.Argon2id
       version: 1, // Version.V0x13
       outputLen: 32,

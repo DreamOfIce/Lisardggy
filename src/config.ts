@@ -86,7 +86,7 @@ export interface YggdrasilServerConfig {
     key?: string;
     keyPath?: string;
   };
-  authServer: AuthServerOptions;
+  auth: AuthServerOptions;
 }
 
 const defaultLoggerConfig = {
@@ -183,7 +183,7 @@ export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.objec
     key: Schema.string(),
     keyPath: Schema.string().default(join(cwd(), "data", "sign.key")),
   }),
-  authServer: Schema.object({
+  auth: Schema.object({
     argon2: Schema.object({
       memoryCost: Schema.natural().min(1).default(32768),
       parallelism: Schema.natural().min(1).default(1),

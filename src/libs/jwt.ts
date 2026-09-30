@@ -47,8 +47,8 @@ export interface JWTVerifyOptions {
   allowOutdated?: boolean;
 }
 
-const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { authServer }) => {
-  const options = authServer.jwt;
+const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { auth }) => {
+  const options = auth.jwt;
   const logger = instance.log.child({}, { msgPrefix: "[JWT] " });
   let publicKey: CryptoKey, privateKey: CryptoKey;
   try {
