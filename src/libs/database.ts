@@ -1,7 +1,7 @@
 import { mkdir } from "node:fs/promises";
 import { dirname } from "node:path";
 
-import { defineProperty, Dict } from "cosmokit";
+import { defineProperty, type Dict } from "cosmokit";
 import type { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import type { Low } from "lowdb";
@@ -19,8 +19,9 @@ declare module "fastify" {
 
 export interface Database extends Low<DatabaseStructure> {
   queryProfile: (this: Database, id: string) => ProfileData | undefined;
-  queryUser: (this: Database, username: string) => UserData | undefined;
-  queryUserByID: (this: Database, id: string) => UserData | undefined;
+  queryProfileByName: (this: Database, name: string) => ProfileData | undefined;
+  queryUser: (this: Database, id: string) => UserData | undefined;
+  queryUserByName: (this: Database, username: string) => UserData | undefined;
 }
 
 export const DATABASE_VERSION = 1;
@@ -72,17 +73,20 @@ const defaultData: DatabaseStructure = {
 };
 
 const databaseHelpers: Partial<Database> = {
-  queryProfile(id) {
-    return this.data.profile.find(({ id: i }) => id === i);
+  queryProfile(_id) {
+    return this.data.profile.find(({ id }) => id === _id);
   },
-  queryUser(username) {
+  queryProfileByName(_name) {
+    return this.data.profile.find(({ name }) => name === _name);
+  },
+  queryUser(_id) {
+    return this.data.user.find(({ id }) => id === _id);
+  },
+  queryUserByName(username) {
     if (username.includes("@")) return this.data.user.find(({ email }) => email === username);
     const profile = Object.values(this.data.profile).find(({ name }) => name === username);
     if (!profile) return;
     return this.data.user.find(({ id }) => id === profile.uid);
-  },
-  queryUserByID(_id) {
-    return this.data.user.find(({ id }) => id === _id);
   },
 };
 

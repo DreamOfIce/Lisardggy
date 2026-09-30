@@ -50,20 +50,17 @@ export interface AuthServerOptions {
     parallelism: number;
     timeCost: number;
   };
-  jwt: JWTOptions;
+  jwt: {
+    expires: number;
+    outdate: number;
+    maxTokens: number;
+    key?: string;
+    keyPath?: string;
+  };
   rateLimit: {
     max: number;
     timeWindow: string;
   };
-}
-
-export interface JWTOptions {
-  expires: number;
-  outdate: number;
-  revocationListGCInterval: number;
-  maxTokens: number;
-  key?: string;
-  keyPath?: string;
 }
 
 export interface YggdrasilServerConfig {
@@ -71,6 +68,13 @@ export interface YggdrasilServerConfig {
   port: number;
   https: false | { cert: string; key: string };
   database: DatabaseOptions;
+  fallback: {
+    passThrough: boolean;
+    apiServer: string;
+    minecraftServices: string;
+    sessionServer: string;
+    proxy?: string;
+  };
   logger: LoggerOptions;
   managementAPI: false | { allow: (string | RegExp)[] };
   metadata: {
@@ -82,13 +86,7 @@ export interface YggdrasilServerConfig {
     key?: string;
     keyPath?: string;
   };
-  fallback: {
-    passThrough: boolean;
-    apiServer: string;
-    sessionServer: string;
-    proxy?: string;
-  };
-  auth: AuthServerOptions;
+  authServer: AuthServerOptions;
 }
 
 const defaultLoggerConfig = {
@@ -117,16 +115,16 @@ export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.objec
   ])
     .default(false)
     .description("HTTPS certificate options"),
-  trustProxy: Schema.union([
-    Schema.boolean(),
-    Schema.number(),
-    Schema.string(),
-    Schema.array(Schema.string()),
-    Schema.function(),
-  ]).default(["loopback", "uniquelocal"]),
   database: Schema.object({
     path: Schema.string().default(join(cwd(), "data", "db.json")),
   }).description("Database options"),
+  fallback: Schema.object({
+    passThrough: Schema.boolean().default(false),
+    apiServer: Schema.string().default("https://api.mojang.com"),
+    minecraftServices: Schema.string().default("https://api.minecraftservices.com"),
+    sessionServer: Schema.string().default("https://sessionserver.mojang.com"),
+    proxy: Schema.string(),
+  }).description("Fallback server options"),
   logger: Schema.union([
     Schema.transform(Schema.boolean(), (v): LoggerOptions => ({
       ...defaultLoggerConfig,
@@ -185,13 +183,7 @@ export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.objec
     key: Schema.string(),
     keyPath: Schema.string().default(join(cwd(), "data", "sign.key")),
   }),
-  fallback: Schema.object({
-    passThrough: Schema.boolean().default(false),
-    apiServer: Schema.string().default("https://api.mojang.com"),
-    sessionServer: Schema.string().default("https://sessionserver.mojang.com"),
-    proxy: Schema.string(),
-  }).description("Fallback server options"),
-  auth: Schema.object({
+  authServer: Schema.object({
     argon2: Schema.object({
       memoryCost: Schema.natural().min(1).default(32768),
       parallelism: Schema.natural().min(1).default(1),
@@ -206,10 +198,6 @@ export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.objec
         Schema.transform(Schema.string(), (t) => parse(t)! / 1000),
         Schema.number(),
       ]).default(7776000), // 60 days
-      revocationListGCInterval: Schema.union([
-        Schema.transform(Schema.string(), (t) => parse(t)! / 1000),
-        Schema.number(),
-      ]).default(3600), // 1 hour
       maxTokens: Schema.natural().min(1).default(30),
       key: Schema.string(),
       keyPath: Schema.string().default(join(cwd(), "data", "jwt.key")),

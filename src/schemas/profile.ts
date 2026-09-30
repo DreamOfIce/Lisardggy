@@ -3,6 +3,12 @@ import Schema from "schemastery";
 
 import { Property, PropertyWithSignature } from "./property";
 
+export type ProfileBase = InferType<typeof ProfileBase>;
+export const ProfileBase = Schema.object({
+  id: Schema.string().required(),
+  name: Schema.string().required(),
+}).required(false);
+
 export type Profile = InferType<typeof Profile>;
 export const Profile = Schema.object({
   id: Schema.string().required(),

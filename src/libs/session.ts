@@ -4,7 +4,11 @@ import type { FastifyPluginAsync } from "fastify";
 
 import type { YggdrasilServerConfig } from "../config";
 import { API } from "../schemas";
-import { formatIP, Keys, profileData2Profile, signProfile, type FastifyInstance } from "../utils";
+import { formatIP, profileData2Profile, signProfile, type FastifyInstance } from "../utils";
+
+export interface SessionServerConfig extends YggdrasilServerConfig {
+  signingKey: CryptoKey;
+}
 
 export interface SessionInfo {
   profile: string;
@@ -12,19 +16,9 @@ export interface SessionInfo {
   timeout: ReturnType<typeof setTimeout>;
 }
 
-export const sessionServer: FastifyPluginAsync<YggdrasilServerConfig> = async (fastify, config) => {
+export const sessionServer: FastifyPluginAsync<SessionServerConfig> = async (fastify, config) => {
   const logger = fastify.log.child({}, { msgPrefix: "[session] " });
   const sessions: Dict<SessionInfo> = {};
-  const { privateKey } = await Keys.loadKeys(
-    config.signature,
-    {
-      name: "RSASSA-PKCS1-v1_5",
-      modulusLength: 4096,
-      publicExponent: Uint8Array.from([0x01, 0x00, 0x01]),
-      hash: "SHA-1",
-    },
-    logger,
-  );
 
   fastify.addHook("preClose", () => {
     Object.values(sessions).forEach(({ timeout }) => {
@@ -104,7 +98,9 @@ export const sessionServer: FastifyPluginAsync<YggdrasilServerConfig> = async (f
           if (ip && clientAddr !== formatIP(ip)) return reply.code(204).send();
           const p = fastify.database.queryProfile(profile);
           if (username === p?.name)
-            return reply.status(200).send(await signProfile(profileData2Profile(p), privateKey));
+            return reply
+              .status(200)
+              .send(await signProfile(profileData2Profile(p), config.signingKey));
         },
       );
 
@@ -130,7 +126,7 @@ export const sessionServer: FastifyPluginAsync<YggdrasilServerConfig> = async (f
           } else {
             return reply
               .code(200)
-              .send(await signProfile(profileData2Profile(profile), privateKey));
+              .send(await signProfile(profileData2Profile(profile), config.signingKey));
           }
         },
       );

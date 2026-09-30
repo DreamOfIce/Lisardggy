@@ -11,7 +11,7 @@ export namespace Argon2 {
   export const compareOptions = (hashed: string, config: YggdrasilServerConfig) => {
     const parsedOptions = parseOptions(hashed);
     const currentOptions: ParsedHashOptions = {
-      ...config.auth.argon2,
+      ...config.authServer.argon2,
       algorithm: 2, // Algorithm.Argon2id
       version: 1, // Version.V0x13
       outputLen: 32,
@@ -22,7 +22,7 @@ export namespace Argon2 {
 
   export const hash = (password: string, config: YggdrasilServerConfig) =>
     _hash(password, {
-      ...config.auth.argon2,
+      ...config.authServer.argon2,
       algorithm: 2, // Algorithm.Argon2id
       version: 1, // Version.V0x13
       outputLen: 32,
@@ -64,8 +64,6 @@ export namespace Keys {
     return await webcrypto.subtle.importKey("jwk", pubKey, algorithm, true, pubKeyUsages);
   };
 
-  const keyCache: WeakMap<{ key?: string; keyPath?: string }, webcrypto.CryptoKeyPair> =
-    new WeakMap();
   export const loadKeys = async (
     keyOptions: { key?: string; keyPath?: string },
     algo:
@@ -75,7 +73,6 @@ export namespace Keys {
     logger: FastifyBaseLogger,
   ): Promise<webcrypto.CryptoKeyPair> => {
     const { key, keyPath } = keyOptions;
-    if (keyPath && keyCache.has(keyOptions)) return keyCache.get(keyOptions)!;
     let keyString = key;
     try {
       if (!key && keyPath) keyString = await readFile(keyPath, "ascii");
@@ -103,7 +100,6 @@ export namespace Keys {
         ["sign"],
       );
       const publicKey = await generatePublicKey(privateKey);
-      keyCache.set(keyOptions, { publicKey, privateKey });
       return { publicKey, privateKey };
     } else if (keyPath) {
       logger.info("key %s not found, start generation...", keyPath);
@@ -114,7 +110,6 @@ export namespace Keys {
       const privKey = await exportPEM(privateKey);
       await writeFile(keyPath, privKey, { mode: 400 });
       logger.info("private key has been written to %s", keyPath);
-      keyCache.set(keyOptions, { publicKey, privateKey });
       return { publicKey, privateKey };
     } else {
       logger.error("Private key not provided");

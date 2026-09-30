@@ -3,8 +3,8 @@ import { schemasteryPlugin, type SchemasteryTypeProvider } from "fastify-type-pr
 
 import { YggdrasilServerConfig } from "./config";
 import { errorHandler } from "./error";
-import { databasePlugin, jwtPlugin } from "./libs";
-import { registerRoutes } from "./routes";
+import { aliasPlugin, databasePlugin, jwtPlugin } from "./libs";
+import { routes } from "./routes";
 import { generateFastifyOptions, type DeepPartial } from "./utils";
 
 export class YggdrasilServer {
@@ -22,10 +22,11 @@ export class YggdrasilServer {
     this.logger = this.server.log.child({}, { msgPrefix: "[Yggdrasil] " });
     this.logger.debug(`server Configuration:\n%o`, this.config);
     this.server
+      .register(aliasPlugin)
       .register(databasePlugin, this.config.database)
       .register(schemasteryPlugin)
-      .register(jwtPlugin, this.config);
-    registerRoutes(this.server, this.config);
+      .register(jwtPlugin, this.config)
+      .register(routes, this.config);
     this.server.setErrorHandler(errorHandler);
   }
 

@@ -25,8 +25,8 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
     global: false,
     hook: "preHandler",
     keyGenerator: (req) => (req.body as Dict<string>)["username"]!,
-    max: config.auth.rateLimit.max,
-    timeWindow: config.auth.rateLimit.timeWindow,
+    max: config.authServer.rateLimit.max,
+    timeWindow: config.authServer.rateLimit.timeWindow,
   });
 
   fastify.register(
@@ -46,7 +46,7 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
         },
         async (request, reply) => {
           const { username, password, clientToken = randomUUID(), requestUser } = request.body;
-          const user = fastify.database.queryUser(username);
+          const user = fastify.database.queryUserByName(username);
           if (!user || !(await Argon2.verify(password, user.hashedPwd))) {
             throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidCredential);
           }
@@ -123,7 +123,7 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
             }),
           };
           if (newProfile) res.selectedProfile = profileData2Profile(newProfile);
-          if (requestUser) res.user = userData2User(fastify.database.queryUserByID(uid)!);
+          if (requestUser) res.user = userData2User(fastify.database.queryUser(uid)!);
 
           logger.trace("client token: %s", res.clientToken);
           logger.trace("new access token: %s", res.accessToken);
@@ -180,7 +180,7 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
         },
         async (request, reply) => {
           const { username, password } = request.body;
-          const user = fastify.database.queryUser(username);
+          const user = fastify.database.queryUserByName(username);
           if (!user || !(await Argon2.verify(password, user.hashedPwd))) {
             throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidCredential);
           }

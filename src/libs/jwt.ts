@@ -47,8 +47,8 @@ export interface JWTVerifyOptions {
   allowOutdated?: boolean;
 }
 
-const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { auth }) => {
-  const options = auth.jwt;
+const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { authServer }) => {
+  const options = authServer.jwt;
   const logger = instance.log.child({}, { msgPrefix: "[JWT] " });
   let publicKey: CryptoKey, privateKey: CryptoKey;
   try {
@@ -64,7 +64,7 @@ const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { aut
         if (exp < now) Reflect.deleteProperty(revocationList, jti);
       });
     });
-  }, options.revocationListGCInterval * 1000);
+  }, 3600_000);
   instance.addHook("onClose", () => {
     clearInterval(interval);
   });
@@ -89,7 +89,7 @@ const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { aut
       logger.debug(`revoke token ${jti}`);
     },
     async sign({ clientToken, selectedProfile, uid }: JWTSignOptions) {
-      const user = instance.database.queryUserByID(uid);
+      const user = instance.database.queryUser(uid);
       if (!user) throw new YggdrasilServerError(`User does not exist`);
       const now = Math.floor(Date.now() / 1000);
       const token = signer({
@@ -132,7 +132,7 @@ const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { aut
         logger.debug("Verification failed: profile id mismatch");
         throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
       }
-      const user = instance.database.queryUserByID(sub);
+      const user = instance.database.queryUser(sub);
       if (!user) {
         logger.debug(`Verification failed: user ${sub} does not exist`);
         throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
