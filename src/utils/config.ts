@@ -12,7 +12,7 @@ import { deepMerge } from "./misc";
 import type { DeepPartial } from "./types";
 
 export const generateFastifyOptions = (config: YggdrasilServer.Config) => {
-  const options: FastifyServerOptions = {};
+  const options: FastifyServerOptions = { ignoreDuplicateSlashes: true };
 
   if (config.https) {
     Object.assign(options, {
