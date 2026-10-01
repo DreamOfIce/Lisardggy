@@ -63,6 +63,11 @@ export interface AuthServerOptions {
   };
 }
 
+export interface SkinServerOptions {
+  baseUrl: string;
+  savePath: string;
+}
+
 export interface YggdrasilServerConfig {
   host: string;
   port: number;
@@ -73,6 +78,7 @@ export interface YggdrasilServerConfig {
     apiServer: string;
     minecraftServices: string;
     sessionServer: string;
+    texturesServer: string;
     proxy?: string;
   };
   logger: LoggerOptions;
@@ -87,6 +93,7 @@ export interface YggdrasilServerConfig {
     keyPath?: string;
   };
   auth: AuthServerOptions;
+  skin: SkinServerOptions;
 }
 
 const defaultLoggerConfig = {
@@ -123,6 +130,7 @@ export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.objec
     apiServer: Schema.string().default("https://api.mojang.com"),
     minecraftServices: Schema.string().default("https://api.minecraftservices.com"),
     sessionServer: Schema.string().default("https://sessionserver.mojang.com"),
+    texturesServer: Schema.string().default("http://textures.minecraft.net/"),
     proxy: Schema.string(),
   }).description("Fallback server options"),
   logger: Schema.union([
@@ -207,4 +215,8 @@ export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.objec
       timeWindow: Schema.string().default("30min"),
     }),
   }).description("Authenticate server options"),
+  skin: Schema.object({
+    baseUrl: Schema.string().default("/textures/"),
+    savePath: Schema.string().default(join(cwd(), "data", "skins")),
+  }).description("Skin server options"),
 }).description("Yggdrasil server configuration");

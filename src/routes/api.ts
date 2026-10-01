@@ -102,8 +102,9 @@ export const apiServer: FastifyPluginAsync<YggdrasilServerConfig> = async (fasti
         method: ["GET", "HEAD", "POST", "PUT", "PATCH", "OPTIONS", "DELETE"],
         url: "/*",
         handler: async (req, reply) => {
-          logger.debug("Forward request to %s%s", config.fallback.apiServer, req.url);
-          return reply.from(req.url);
+          const url = req.url.slice(4); // remove prefix '/api'
+          logger.debug("Forward request to %s%s", config.fallback.apiServer, url);
+          return reply.from(url);
         },
       });
     },

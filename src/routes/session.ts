@@ -100,7 +100,7 @@ export const sessionServer: FastifyPluginAsync<SessionServerConfig> = async (fas
           if (username === p?.name)
             return reply
               .status(200)
-              .send(await signProfile(profileData2Profile(p), config.signingKey));
+              .send(await signProfile(profileData2Profile(p, config), config.signingKey));
         },
       );
 
@@ -122,11 +122,11 @@ export const sessionServer: FastifyPluginAsync<SessionServerConfig> = async (fas
               return reply.from(`/session/minecraft/profile/${uuid}`);
             else return reply.code(204).send();
           } else if (unsigned) {
-            return reply.code(200).send(profileData2Profile(profile));
+            return reply.code(200).send(profileData2Profile(profile, config));
           } else {
             return reply
               .code(200)
-              .send(await signProfile(profileData2Profile(profile), config.signingKey));
+              .send(await signProfile(profileData2Profile(profile, config), config.signingKey));
           }
         },
       );

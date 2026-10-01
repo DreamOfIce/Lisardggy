@@ -2,10 +2,14 @@ import { webcrypto } from "node:crypto";
 
 import { Binary } from "cosmokit";
 
-import type { ProfileData, UserData } from "../libs";
+import type { YggdrasilServerConfig } from "../config";
+import type { ProfileData, UserData } from "../plugins";
 import type { Profile, ProfileWithSignature, User } from "../schemas";
 
-export const profileData2Profile = (profile: ProfileData): Profile => {
+export const profileData2Profile = (
+  profile: ProfileData,
+  config: YggdrasilServerConfig,
+): Profile => {
   const { id, name, extProps, skin } = profile;
   const textures = {
     timestamp: skin.lastUpdate,
@@ -14,12 +18,19 @@ export const profileData2Profile = (profile: ProfileData): Profile => {
     textures: Object.fromEntries(
       Object.entries(skin.textures)
         .filter(([key]) => ["skin", "cape"].includes(key))
-        .map(([key, { url, metadata }]) => [key.toUpperCase(), { url, metadata }]),
+        .map(([key, { hash, metadata }]) => [
+          key.toUpperCase(),
+          { url: `${config.skin.baseUrl}${hash}`, metadata },
+        ]),
     ),
   };
-  extProps["textures"] = btoa(JSON.stringify(textures));
-  extProps["uploadableTextures"] = skin.uploadable.join(",");
-  const properties = Object.entries(extProps).map(([name, value]) => ({ name, value }));
+  const encodedTextures = btoa(JSON.stringify(textures));
+  const uploadableTextures = skin.uploadable.join(",");
+  const properties = Object.entries({
+    ...extProps,
+    textures: encodedTextures,
+    uploadableTextures,
+  }).map(([name, value]) => ({ name, value }));
   return { id, name, properties };
 };
 

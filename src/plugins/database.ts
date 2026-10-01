@@ -50,7 +50,7 @@ export interface ProfileData {
     lastUpdate: number;
     uploadable: string[];
     textures: {
-      [k: string]: { url: string; metadata: Dict<string> };
+      [k: string]: { hash: string; metadata: Dict<string> };
     };
   };
 }

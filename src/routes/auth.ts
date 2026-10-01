@@ -4,6 +4,7 @@ import type { FastifyPluginAsync } from "fastify";
 
 import type { YggdrasilServerConfig } from "../config";
 import { YggdrasilErrors, YggdrasilServerError } from "../error";
+import type { ProfileData } from "../plugins/database";
 import { API, type Profile } from "../schemas";
 import {
   Argon2,
@@ -12,7 +13,6 @@ import {
   userData2User,
   type FastifyInstance,
 } from "../utils";
-import type { ProfileData } from "./database";
 
 export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
   fastify: FastifyInstance,
@@ -25,8 +25,8 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
     global: false,
     hook: "preHandler",
     keyGenerator: (req) => (req.body as Dict<string>)["username"]!,
-    max: config.authServer.rateLimit.max,
-    timeWindow: config.authServer.rateLimit.timeWindow,
+    max: config.auth.rateLimit.max,
+    timeWindow: config.auth.rateLimit.timeWindow,
   });
 
   fastify.register(
@@ -57,7 +57,7 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
           const availableProfiles = user.profiles.map((id) => {
             const p = fastify.database.queryProfile(id);
             if (p === undefined) throw new YggdrasilServerError(`Failed to query profile ${id}`);
-            return profileData2Profile(p);
+            return profileData2Profile(p, config);
           });
           let selectedProfile: Profile | undefined;
           if (availableProfiles.length === 1) selectedProfile = availableProfiles[0];
@@ -122,7 +122,7 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
               uid,
             }),
           };
-          if (newProfile) res.selectedProfile = profileData2Profile(newProfile);
+          if (newProfile) res.selectedProfile = profileData2Profile(newProfile, config);
           if (requestUser) res.user = userData2User(fastify.database.queryUser(uid)!);
 
           logger.trace("client token: %s", res.clientToken);

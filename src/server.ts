@@ -3,8 +3,8 @@ import { schemasteryPlugin, type SchemasteryTypeProvider } from "fastify-type-pr
 
 import { YggdrasilServerConfig } from "./config";
 import { errorHandler } from "./error";
-import { aliasPlugin, databasePlugin, jwtPlugin } from "./libs";
-import { routes } from "./routes";
+import { aliasPlugin, databasePlugin, jwtPlugin } from "./plugins";
+import { routes } from "./route";
 import { generateFastifyOptions, type DeepPartial } from "./utils";
 
 export class YggdrasilServer {

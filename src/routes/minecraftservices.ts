@@ -32,8 +32,9 @@ export const minecraftservicesServer: FastifyPluginAsync<YggdrasilServerConfig> 
         method: ["GET", "HEAD", "POST", "PUT", "PATCH", "OPTIONS", "DELETE"],
         url: "/*",
         handler: async (req, reply) => {
-          logger.debug("Forward request to %s%s", config.fallback.minecraftServices, req.url);
-          return reply.from(req.url);
+          const url = req.url.slice(18); // remove '/minecraftservices'
+          logger.debug("Forward request to %s%s", config.fallback.minecraftServices, url);
+          return reply.from(url);
         },
       });
     },

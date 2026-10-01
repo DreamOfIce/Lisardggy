@@ -1,7 +1,4 @@
 gitChecks: false
-minimumReleaseAgeExclude:
-  - "@dreamofice/schemastery-json-schema@1.1.2"
-  - fastify-type-provider-schemastery@1.1.6
 overrides:
   "@types/parse-path": "-"
 patchedDependencies:
