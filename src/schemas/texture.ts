@@ -3,6 +3,8 @@ import Schema from "schemastery";
 
 export type TextureType = "skin" | "cape";
 export const TextureType: Schema<TextureType> = Schema.union(["skin", "cape"]);
+export type UpperCasedTextureType = Uppercase<TextureType>;
+export const UpperCasedTextureType: Schema<UpperCasedTextureType> = Schema.union(["SKIN", "CAPE"]);
 
 export interface Texture {
   url: string;
@@ -18,11 +20,13 @@ export interface Textures {
   timestamp: number;
   profileId: string;
   profileName: string;
-  textures: Dict<Texture, Uppercase<TextureType>>;
+  textures: Partial<Dict<Texture, Uppercase<TextureType>>>;
 }
-export const Textures = Schema.object({
+export const Textures: Schema<Textures> = Schema.object({
   timestamp: Schema.number().required(),
   profileId: Schema.string().required(),
   profileName: Schema.string().required(),
-  textures: Schema.dict(Texture),
+  textures: Schema.dict(Texture, UpperCasedTextureType) as Schema<
+    Partial<Dict<Texture, Uppercase<TextureType>>>
+  >,
 });

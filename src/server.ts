@@ -1,9 +1,9 @@
 import Fastify, { type FastifyBaseLogger, type FastifyInstance } from "fastify";
-import { schemasteryPlugin, type SchemasteryTypeProvider } from "fastify-type-provider-schemastery";
+import type { SchemasteryTypeProvider } from "fastify-type-provider-schemastery";
 
 import { YggdrasilServerConfig } from "./config";
 import { errorHandler } from "./error";
-import { aliasPlugin, databasePlugin, jwtPlugin } from "./plugins";
+import { registerPlugins } from "./plugin";
 import { routes } from "./route";
 import { generateFastifyOptions, type DeepPartial } from "./utils";
 
@@ -20,13 +20,9 @@ export class YggdrasilServer {
     ).withTypeProvider<SchemasteryTypeProvider>();
 
     this.logger = this.server.log.child({}, { msgPrefix: "[Yggdrasil] " });
-    this.logger.debug(`server Configuration:\n%o`, this.config);
-    this.server
-      .register(aliasPlugin)
-      .register(databasePlugin, this.config.database)
-      .register(schemasteryPlugin)
-      .register(jwtPlugin, this.config)
-      .register(routes, this.config);
+    this.logger.debug("server Configuration:\n%o", this.config);
+    registerPlugins(this.server, this.config);
+    this.server.register(routes, this.config);
     this.server.setErrorHandler(errorHandler);
   }
 

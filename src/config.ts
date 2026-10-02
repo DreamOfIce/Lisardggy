@@ -66,6 +66,11 @@ export interface AuthServerOptions {
 export interface SkinServerOptions {
   baseUrl: string;
   savePath: string;
+  maxFileSize: number;
+  maxWidth: {
+    cape: number;
+    skin: number;
+  };
 }
 
 export interface YggdrasilServerConfig {
@@ -216,7 +221,12 @@ export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.objec
     }),
   }).description("Authenticate server options"),
   skin: Schema.object({
-    baseUrl: Schema.string().default("/textures/"),
+    baseUrl: Schema.string().default("/skins/"),
     savePath: Schema.string().default(join(cwd(), "data", "skins")),
+    maxFileSize: Schema.natural().default(1048576), // 1MB
+    maxWidth: Schema.object({
+      cape: Schema.natural().min(64).step(64).default(64),
+      skin: Schema.natural().min(64).step(64).default(64),
+    }),
   }).description("Skin server options"),
 }).description("Yggdrasil server configuration");

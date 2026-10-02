@@ -20,7 +20,10 @@ export const profileData2Profile = (
         .filter(([key]) => ["skin", "cape"].includes(key))
         .map(([key, { hash, metadata }]) => [
           key.toUpperCase(),
-          { url: `${config.skin.baseUrl}${hash}`, metadata },
+          {
+            url: `${config.skin.baseUrl}${hash}`,
+            ...(Object.keys(metadata).length === 0 ? {} : { metadata }),
+          },
         ]),
     ),
   };

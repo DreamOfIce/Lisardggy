@@ -34,4 +34,6 @@ const plugin: FastifyPluginAsync = async (fastify) => {
   fastify.decorate("alias", alias);
 };
 
-export const aliasPlugin = fp(plugin);
+export const aliasPlugin = fp(plugin, {
+  name: "@yggdrasil-server/alias",
+});

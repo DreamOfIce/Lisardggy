@@ -2,7 +2,7 @@ import Schema from "schemastery";
 
 import { Profile as ProfileType, ProfileWithSignature } from "../profile";
 
-export namespace Session {
+export namespace SessionServer {
   export namespace Join {
     export interface Body {
       accessToken: string;

@@ -31,6 +31,11 @@ export namespace Argon2 {
   export const verify = (password: string, hashed: string) => _verify(hashed, password);
 }
 
+export namespace SHA256 {
+  export const hash = async (data: ArrayBuffer) =>
+    Binary.toHex(await webcrypto.subtle.digest("SHA-256", data));
+}
+
 export namespace Keys {
   export const exportPEM = async (key: CryptoKey): Promise<string> => {
     if (key.type === "secret")

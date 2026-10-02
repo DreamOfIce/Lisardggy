@@ -44,8 +44,8 @@ export const sessionServer: FastifyPluginAsync<SessionServerConfig> = async (fas
         "/session/minecraft/join",
         {
           schema: {
-            body: API.Session.Join.Body,
-            response: { 200: API.Session.HasJoined.Response, 204: true },
+            body: API.SessionServer.Join.Body,
+            response: { 200: API.SessionServer.HasJoined.Response, 204: true },
           },
         },
         async (request, reply) => {
@@ -62,13 +62,18 @@ export const sessionServer: FastifyPluginAsync<SessionServerConfig> = async (fas
           const { sub, profile } = fastify.jwt.verify(accessToken, { pid: selectedProfile });
 
           const timeout = setTimeout(() => Reflect.deleteProperty(sessions, serverId), 30_000);
+          const clientAddr = formatIP(request.ip);
           sessions[serverId] = {
             profile: selectedProfile,
-            clientAddr: formatIP(request.ip),
+            clientAddr,
             timeout,
           };
 
-          logger.debug(`User ${sub} join games with profile ${profile.name!}(${selectedProfile})`);
+          logger.trace("accessToken: %s", accessToken);
+          logger.trace("clientAddr: %s", clientAddr);
+          logger.trace("serverId: %s", serverId);
+          logger.debug(`User ${sub} joins game with profile ${profile.name!}(${selectedProfile})`);
+
           return reply.code(204).send();
         },
       );
@@ -77,8 +82,8 @@ export const sessionServer: FastifyPluginAsync<SessionServerConfig> = async (fas
         "/session/minecraft/hasJoined",
         {
           schema: {
-            querystring: API.Session.HasJoined.QueryString,
-            response: { 200: API.Session.HasJoined.Response, 204: true },
+            querystring: API.SessionServer.HasJoined.QueryString,
+            response: { 200: API.SessionServer.HasJoined.Response, 204: true },
           },
         },
         async (request, reply) => {
@@ -97,10 +102,16 @@ export const sessionServer: FastifyPluginAsync<SessionServerConfig> = async (fas
           const { profile, clientAddr } = Reflect.get(sessions, serverId);
           if (ip && clientAddr !== formatIP(ip)) return reply.code(204).send();
           const p = fastify.database.queryProfile(profile);
+
+          logger.trace("clientAddr: %s", clientAddr);
+          logger.trace("serverId: %s", serverId);
+          logger.trace("profile: %s", p?.id ?? "not found");
+
           if (username === p?.name)
             return reply
               .status(200)
               .send(await signProfile(profileData2Profile(p, config), config.signingKey));
+          else return reply.code(204).send();
         },
       );
 
@@ -108,9 +119,9 @@ export const sessionServer: FastifyPluginAsync<SessionServerConfig> = async (fas
         "/session/minecraft/profile/:uuid",
         {
           schema: {
-            params: API.Session.Profile.Params,
-            querystring: API.Session.Profile.QueryString,
-            response: { 200: API.Session.Profile.Response, 204: true },
+            params: API.SessionServer.Profile.Params,
+            querystring: API.SessionServer.Profile.QueryString,
+            response: { 200: API.SessionServer.Profile.Response, 204: true },
           },
         },
         async (request, reply) => {

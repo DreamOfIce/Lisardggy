@@ -8,7 +8,8 @@ import type { Low } from "lowdb";
 import { JSONFilePreset } from "lowdb/node";
 
 import { name } from "../../package.json";
-import type { DatabaseOptions } from "../config";
+import type { YggdrasilServerConfig } from "../config";
+import { TextureType } from "../schemas";
 import { randomUUID } from "../utils";
 
 declare module "fastify" {
@@ -49,9 +50,7 @@ export interface ProfileData {
   skin: {
     lastUpdate: number;
     uploadable: string[];
-    textures: {
-      [k: string]: { hash: string; metadata: Dict<string> };
-    };
+    textures: Partial<Dict<{ hash: string; metadata: Dict<string> }, TextureType>>;
   };
 }
 
@@ -90,15 +89,20 @@ const databaseHelpers: Partial<Database> = {
   },
 };
 
-const plugin: FastifyPluginAsync<DatabaseOptions> = async (instance, { path }) => {
-  await mkdir(dirname(path), { recursive: true });
-  const database = await JSONFilePreset(path, defaultData);
-  await database.write();
-  Object.entries(databaseHelpers).forEach(([method, func]) =>
-    defineProperty(database, method, func),
-  );
-  instance.decorate("database", database as Database);
-  instance.addHook("onClose", () => database.write());
+export const createDatabase = async (config: YggdrasilServerConfig): Promise<Database> => {
+  await mkdir(dirname(config.database.path), { recursive: true });
+  const db = await JSONFilePreset(config.database.path, defaultData);
+  await db.write();
+  Object.entries(databaseHelpers).forEach(([method, func]) => defineProperty(db, method, func));
+  return db as Database;
 };
 
-export const databasePlugin = fp(plugin);
+const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, config) => {
+  const db = await createDatabase(config);
+  instance.decorate("database", db);
+  instance.addHook("onClose", () => db.write());
+};
+
+export const databasePlugin = fp(plugin, {
+  name: "@yggdrasil-server/database",
+});

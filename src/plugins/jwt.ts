@@ -172,4 +172,7 @@ const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { aut
   instance.decorate("jwt", jwt);
 };
 
-export const jwtPlugin = fp(plugin);
+export const jwtPlugin = fp(plugin, {
+  name: "@yggdrasil-server/skin",
+  dependencies: ["@yggdrasil-server/database"],
+});
