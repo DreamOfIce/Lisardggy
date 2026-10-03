@@ -3,14 +3,14 @@ import type { Dict } from "cosmokit";
 import { API } from "./schemas";
 import type { FastifyInstance } from "./utils";
 
-export class YggdrasilServerError extends Error {
+export class LisardggyServerErrors extends Error {
   public code: number;
   public response: API.Error;
 
-  constructor(type: YggdrasilErrors);
+  constructor(type: LisardggyErrors);
   constructor(message: string, options?: { cause?: string; code?: number });
   constructor(
-    typeOrMessage: YggdrasilErrors | string,
+    typeOrMessage: LisardggyErrors | string,
     { cause, code }: { cause?: string; code?: number } = {},
   ) {
     if (typeof typeOrMessage === "string") {
@@ -30,7 +30,7 @@ export class YggdrasilServerError extends Error {
   }
 }
 
-export enum YggdrasilErrors {
+export enum LisardggyErrors {
   AssignInvalidProfile,
   AssignInvalidToken,
   AuthInvalidCredential,
@@ -39,35 +39,35 @@ export enum YggdrasilErrors {
 }
 
 export const errorResponses = {
-  [YggdrasilErrors.AssignInvalidProfile]: [
+  [LisardggyErrors.AssignInvalidProfile]: [
     403,
     {
       error: "ForbiddenOperationException",
       errorMessage: "Access token cannot be assigned to request profile.",
     },
   ],
-  [YggdrasilErrors.AssignInvalidToken]: [
+  [LisardggyErrors.AssignInvalidToken]: [
     400,
     {
       error: "IllegalArgumentException",
       errorMessage: "Access token already has a profile assigned.",
     },
   ],
-  [YggdrasilErrors.AuthInvalidToken]: [
+  [LisardggyErrors.AuthInvalidToken]: [
     403,
     {
       error: "ForbiddenOperationException",
       errorMessage: "Invalid token.",
     },
   ],
-  [YggdrasilErrors.AuthInvalidCredential]: [
+  [LisardggyErrors.AuthInvalidCredential]: [
     403,
     {
       error: "ForbiddenOperationException",
       errorMessage: "Invalid credentials. Invalid username or password.",
     },
   ],
-  [YggdrasilErrors.SessionInvalidProfile]: [
+  [LisardggyErrors.SessionInvalidProfile]: [
     403,
     {
       error: "ForbiddenOperationException",
@@ -83,7 +83,7 @@ export const errorHandler: Parameters<FastifyInstance["setErrorHandler"]>[0] = (
 ) => {
   reply.log.error(error);
   console.log(error);
-  if (error instanceof YggdrasilServerError) {
+  if (error instanceof LisardggyServerErrors) {
     const { code, response } = error;
     return reply.code(code).send(response);
   } else if (error instanceof Error) {

@@ -2,7 +2,7 @@ import { omit } from "cosmokit";
 import type { FastifyPluginAsync } from "fastify";
 
 import { name, version } from "../package.json";
-import type { YggdrasilServerConfig } from "./config";
+import type { LisardggyConfig } from "./config";
 import {
   apiServer,
   authServer,
@@ -13,7 +13,7 @@ import {
 import { API } from "./schemas";
 import { type FastifyInstance, Keys } from "./utils";
 
-export const routes: FastifyPluginAsync<YggdrasilServerConfig> = async (
+export const routes: FastifyPluginAsync<LisardggyConfig> = async (
   fastify: FastifyInstance,
   config,
 ) => {

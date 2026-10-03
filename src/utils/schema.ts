@@ -2,14 +2,11 @@ import { webcrypto } from "node:crypto";
 
 import { Binary } from "cosmokit";
 
-import type { YggdrasilServerConfig } from "../config";
+import type { LisardggyConfig } from "../config";
 import type { ProfileData, UserData } from "../plugins";
 import type { Profile, ProfileWithSignature, User } from "../schemas";
 
-export const profileData2Profile = (
-  profile: ProfileData,
-  config: YggdrasilServerConfig,
-): Profile => {
+export const profileData2Profile = (profile: ProfileData, config: LisardggyConfig): Profile => {
   const { id, name, extProps, skin } = profile;
   const textures = {
     timestamp: skin.lastUpdate,

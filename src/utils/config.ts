@@ -7,11 +7,11 @@ import type { TransportTargetOptions } from "pino";
 import type { PinoRollOptions } from "pino-roll";
 import Schema from "schemastery";
 
-import { YggdrasilServer } from "../server";
+import { Lisardggy } from "../server";
 import { deepMerge } from "./misc";
 import type { DeepPartial } from "./types";
 
-export const generateFastifyOptions = (config: YggdrasilServer.Config) => {
+export const generateFastifyOptions = (config: Lisardggy.Config) => {
   const options: FastifyServerOptions = {
     routerOptions: { ignoreDuplicateSlashes: true },
   };

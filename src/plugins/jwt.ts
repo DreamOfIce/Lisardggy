@@ -5,22 +5,22 @@ import { type Bufferable, createDecoder, createSigner, createVerifier } from "fa
 import { type FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 
-import type { YggdrasilServerConfig } from "../config";
-import { YggdrasilServerError, YggdrasilErrors } from "../error";
+import type { LisardggyConfig } from "../config";
+import { LisardggyServerErrors, LisardggyErrors } from "../error";
 import { Keys } from "../utils";
 
 declare module "fastify" {
   interface FastifyInstance {
     jwt: {
-      decode(token: Bufferable): YggdrasilAccessTokenData;
+      decode(token: Bufferable): LisardggyAccessTokenData;
       invalidate(token: Bufferable): Promise<void>;
       sign(options: JWTSignOptions): Promise<string>;
-      verify(token: Bufferable, options?: JWTVerifyOptions): YggdrasilAccessTokenData;
+      verify(token: Bufferable, options?: JWTVerifyOptions): LisardggyAccessTokenData;
     };
   }
 }
 
-export interface YggdrasilAccessTokenData {
+export interface LisardggyAccessTokenData {
   ctk: string; // client token
   exp: number;
   iat: number;
@@ -47,7 +47,7 @@ export interface JWTVerifyOptions {
   allowOutdated?: boolean;
 }
 
-const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { auth }) => {
+const plugin: FastifyPluginAsync<LisardggyConfig> = async (instance, { auth }) => {
   const options = auth.jwt;
   const logger = instance.log.child({}, { msgPrefix: "[JWT] " });
   let publicKey: CryptoKey, privateKey: CryptoKey;
@@ -72,15 +72,15 @@ const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { aut
   const decoder = createDecoder();
   const signer = createSigner({
     key: await Keys.exportPEM(privateKey),
-    iss: instance.database.data.yggdrasil.instanceID,
+    iss: instance.database.data.lisardggy.instanceId,
   });
   const verifier = createVerifier({
     key: await Keys.exportPEM(publicKey),
-    allowedIss: instance.database.data.yggdrasil.instanceID,
+    allowedIss: instance.database.data.lisardggy.instanceId,
   });
   const jwt = {
     decode(token: Bufferable) {
-      return decoder(token) as YggdrasilAccessTokenData;
+      return decoder(token) as LisardggyAccessTokenData;
     },
     async invalidate(token: Bufferable) {
       const { exp, jti } = this.decode(token);
@@ -90,7 +90,7 @@ const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { aut
     },
     async sign({ clientToken, selectedProfile, uid }: JWTSignOptions) {
       const user = instance.database.queryUser(uid);
-      if (!user) throw new YggdrasilServerError(`User does not exist`);
+      if (!user) throw new LisardggyServerErrors(`User does not exist`);
       const now = Math.floor(Date.now() / 1000);
       const token = signer({
         ctk: clientToken,
@@ -108,62 +108,62 @@ const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { aut
       token: Bufferable,
       { clientToken, pid, uid, allowOutdated = false }: JWTVerifyOptions = {},
     ) {
-      let decoded: YggdrasilAccessTokenData;
+      let decoded: LisardggyAccessTokenData;
       try {
-        decoded = verifier(token) as YggdrasilAccessTokenData;
+        decoded = verifier(token) as LisardggyAccessTokenData;
       } catch (err) {
         logger.debug(`Verification failed: %s`, err instanceof Error ? err.message : err);
-        throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+        throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
       }
       const { ctk, jti, odt, profile, seq, sub } = decoded;
       if (Reflect.has(instance.database.data.revocationList, jti)) {
         logger.debug("Verification failed: token has been revoked");
-        throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+        throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
       }
       if (clientToken && ctk !== clientToken) {
         logger.debug("Verification failed: client token mismatch");
-        throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+        throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
       }
       if (uid !== undefined && sub !== uid) {
         logger.debug("Verification failed: user id mismatch");
-        throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+        throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
       }
       if (pid !== undefined && profile.id !== pid) {
         logger.debug("Verification failed: profile id mismatch");
-        throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+        throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
       }
       const user = instance.database.queryUser(sub);
       if (!user) {
         logger.debug(`Verification failed: user ${sub} does not exist`);
-        throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+        throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
       }
       if (seq < user.minSeq) {
         logger.debug("Verification failed: token has been revoked(user signed out)");
-        throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+        throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
       }
       if (seq < user.tokenSeq - options.maxTokens) {
         logger.debug("Verification failed: token has been revoked(exceed max limit)");
-        throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+        throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
       }
       if (!allowOutdated && odt < Date.now() / 1000) {
         logger.debug("Verification failed: token outdated");
-        throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+        throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
       }
       if (profile.id) {
         const p = instance.database.queryProfile(profile.id);
         if (!p) {
           logger.debug(`Verification failed: profile ${profile.id} not found`);
-          throw new YggdrasilServerError("Profile not found.", {
+          throw new LisardggyServerErrors("Profile not found.", {
             code: 400,
           });
         }
         if (uid !== undefined && p.uid !== uid) {
           logger.debug(`Verification failed: profile ${p.id} does not belong to ${uid}`);
-          throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+          throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
         }
         if (!allowOutdated && profile.name !== p.name) {
           logger.debug("Verification failed: token outdated(profile name changed)");
-          throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+          throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
         }
       }
       return decoded;
@@ -173,6 +173,6 @@ const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, { aut
 };
 
 export const jwtPlugin = fp(plugin, {
-  name: "@yggdrasil-server/skin",
-  dependencies: ["@yggdrasil-server/database"],
+  name: "@@lisardggy/skin",
+  dependencies: ["@@lisardggy/database"],
 });

@@ -2,11 +2,11 @@ import fastifyReplyFrom from "@fastify/reply-from";
 import type { Dict } from "cosmokit";
 import type { FastifyPluginAsync } from "fastify";
 
-import type { YggdrasilServerConfig } from "../config";
+import type { LisardggyConfig } from "../config";
 import { API } from "../schemas";
 import { formatIP, profileData2Profile, signProfile, type FastifyInstance } from "../utils";
 
-export interface SessionServerConfig extends YggdrasilServerConfig {
+export interface SessionServerConfig extends LisardggyConfig {
   signingKey: CryptoKey;
 }
 
@@ -53,7 +53,7 @@ export const sessionServer: FastifyPluginAsync<SessionServerConfig> = async (fas
           if (config.fallback.passThrough) {
             try {
               const { iss } = fastify.jwt.decode(accessToken);
-              if (iss !== fastify.database.data.yggdrasil.instanceID) throw new Error();
+              if (iss !== fastify.database.data.lisardggy.instanceId) throw new Error();
             } catch {
               logger.debug("Access token decoding failed, forward to the fallback server");
               return reply.from("/session/minecraft/join");

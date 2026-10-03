@@ -1,8 +1,8 @@
-import { YggdrasilServer } from "./server";
+import { Lisardggy } from "./server";
 
-export const defineConfig = (config: YggdrasilServer.Config) => config;
+export const defineConfig = (config: Lisardggy.Config) => config;
 
-export default YggdrasilServer;
+export default Lisardggy;
 
 export * from "./config";
 export * from "./plugins";

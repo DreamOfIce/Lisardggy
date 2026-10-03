@@ -5,8 +5,8 @@ import type { FastifyBaseLogger, FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import sharp from "sharp";
 
-import type { YggdrasilServerConfig } from "../config";
-import { YggdrasilServerError } from "../error";
+import type { LisardggyConfig } from "../config";
+import { LisardggyServerErrors } from "../error";
 import type { TextureType } from "../schemas";
 import { SHA256 } from "../utils";
 import type { Database } from "./database";
@@ -28,7 +28,7 @@ export interface SkinManager {
 }
 
 export const createSkinManager = async (
-  config: YggdrasilServerConfig,
+  config: LisardggyConfig,
   { database, logger }: { database: Database; logger: FastifyBaseLogger },
 ): Promise<SkinManager> => {
   await mkdir(config.skin.savePath, { recursive: true });
@@ -48,7 +48,7 @@ export const createSkinManager = async (
       const profile = database.queryProfile(id);
       if (!profile) return;
       else if (!profile.skin.uploadable.includes(type))
-        throw new YggdrasilServerError(`Texture ${type} is not uploadable`, { code: 403 });
+        throw new LisardggyServerErrors(`Texture ${type} is not uploadable`, { code: 403 });
 
       let hash = await SHA256.hash(image.buffer);
       if (skins[hash]) {
@@ -87,7 +87,7 @@ export const createSkinManager = async (
                 break;
               }
             }
-            throw new YggdrasilServerError(`Image size is invalid.`, { code: 400 });
+            throw new LisardggyServerErrors(`Image size is invalid.`, { code: 400 });
           }
           case "skin": {
             // should be a multiple of 64*64 or 64*32
@@ -98,7 +98,7 @@ export const createSkinManager = async (
               [1, 2].includes(metadata.width / metadata.height)
             )
               break;
-            else throw new YggdrasilServerError(`Image size is invalid.`, { code: 400 });
+            else throw new LisardggyServerErrors(`Image size is invalid.`, { code: 400 });
           }
         }
         const output = await img.png({ force: true }).toBuffer();
@@ -115,7 +115,7 @@ export const createSkinManager = async (
       const profile = database.queryProfile(id);
       if (!profile) return;
       else if (!profile.skin.uploadable.includes(type))
-        throw new YggdrasilServerError(`Texture ${type} is not uploadable`, { code: 403 });
+        throw new LisardggyServerErrors(`Texture ${type} is not uploadable`, { code: 403 });
       else if (!Reflect.has(profile.skin.textures, type)) return;
 
       const { hash } = profile.skin.textures[type]!;
@@ -135,7 +135,7 @@ export const createSkinManager = async (
   return skinManager;
 };
 
-const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, config) => {
+const plugin: FastifyPluginAsync<LisardggyConfig> = async (instance, config) => {
   const logger = instance.log.child({}, { msgPrefix: "[skin] " });
   instance.decorate(
     "skin",
@@ -144,6 +144,6 @@ const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, confi
 };
 
 export const skinPlugin = fp(plugin, {
-  name: "@yggdrasil-server/skin",
-  dependencies: ["@yggdrasil-server/database"],
+  name: "@@lisardggy/skin",
+  dependencies: ["@@lisardggy/database"],
 });

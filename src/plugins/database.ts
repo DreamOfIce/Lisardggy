@@ -8,7 +8,7 @@ import type { Low } from "lowdb";
 import { JSONFilePreset } from "lowdb/node";
 
 import { name } from "../../package.json";
-import type { YggdrasilServerConfig } from "../config";
+import type { LisardggyConfig } from "../config";
 import { TextureType } from "../schemas";
 import { randomUUID } from "../utils";
 
@@ -27,8 +27,8 @@ export interface Database extends Low<DatabaseStructure> {
 
 export const DATABASE_VERSION = 1;
 
-export interface YggdrasilInternalData {
-  instanceID: string;
+export interface LisardggyInternalData {
+  instanceId: string;
   version: number;
 }
 
@@ -58,15 +58,15 @@ export interface DatabaseStructure {
   user: UserData[];
   profile: ProfileData[];
   revocationList: Dict<number>;
-  yggdrasil: YggdrasilInternalData;
+  lisardggy: LisardggyInternalData;
 }
 
 const defaultData: DatabaseStructure = {
   user: [],
   profile: [],
   revocationList: {},
-  yggdrasil: {
-    instanceID: `${name}.${randomUUID()}`,
+  lisardggy: {
+    instanceId: `${name}.${randomUUID()}`,
     version: DATABASE_VERSION,
   },
 };
@@ -89,7 +89,7 @@ const databaseHelpers: Partial<Database> = {
   },
 };
 
-export const createDatabase = async (config: YggdrasilServerConfig): Promise<Database> => {
+export const createDatabase = async (config: LisardggyConfig): Promise<Database> => {
   await mkdir(dirname(config.database.path), { recursive: true });
   const db = await JSONFilePreset(config.database.path, defaultData);
   await db.write();
@@ -97,12 +97,12 @@ export const createDatabase = async (config: YggdrasilServerConfig): Promise<Dat
   return db as Database;
 };
 
-const plugin: FastifyPluginAsync<YggdrasilServerConfig> = async (instance, config) => {
+const plugin: FastifyPluginAsync<LisardggyConfig> = async (instance, config) => {
   const db = await createDatabase(config);
   instance.decorate("database", db);
   instance.addHook("onClose", () => db.write());
 };
 
 export const databasePlugin = fp(plugin, {
-  name: "@yggdrasil-server/database",
+  name: "@@lisardggy/database",
 });

@@ -3,12 +3,12 @@ import fastifyReplyFrom from "@fastify/reply-from";
 import type { FastifyPluginAsync } from "fastify";
 import { request } from "undici";
 
-import type { YggdrasilServerConfig } from "../config";
-import { YggdrasilErrors, YggdrasilServerError } from "../error";
+import type { LisardggyConfig } from "../config";
+import { LisardggyErrors, LisardggyServerErrors } from "../error";
 import { API, type ProfileBase } from "../schemas";
 import { type FastifyInstance } from "../utils";
 
-export const apiServer: FastifyPluginAsync<YggdrasilServerConfig> = async (fastify, config) => {
+export const apiServer: FastifyPluginAsync<LisardggyConfig> = async (fastify, config) => {
   const logger = fastify.log.child({}, { msgPrefix: "[api] " });
 
   fastify.register(
@@ -85,7 +85,7 @@ export const apiServer: FastifyPluginAsync<YggdrasilServerConfig> = async (fasti
               );
               if (statusCode === 200) return reply.code(200).send(<ProfileBase>await body.json());
             }
-            throw new YggdrasilServerError(`Couldn't find any profile with name ${name}`, {
+            throw new LisardggyServerErrors(`Couldn't find any profile with name ${name}`, {
               code: 404,
             });
           }
@@ -130,7 +130,7 @@ export const apiServer: FastifyPluginAsync<YggdrasilServerConfig> = async (fasti
           const { authorization } = req.headers;
           const { id, type } = req.params;
           const token = authorization.trim().match(/^Bearer (.+)$/)?.[1];
-          if (!token) throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+          if (!token) throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
           const { file, model } = req.body;
           await fastify.skin.set(id, type, file, { model });
           return reply.code(204).send();
@@ -149,7 +149,7 @@ export const apiServer: FastifyPluginAsync<YggdrasilServerConfig> = async (fasti
           const { authorization } = req.headers;
           const { id, type } = req.params;
           const token = authorization.trim().match(/^Bearer (.+)$/)?.[1];
-          if (!token) throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidToken);
+          if (!token) throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidToken);
           fastify.jwt.verify(token, { pid: id });
           await fastify.skin.remove(id, type);
           return reply.code(204).send();

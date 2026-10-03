@@ -1,23 +1,23 @@
 {
-  "name": "yggdrasil-server",
+  "name": "lisardggy",
   "version": "0.1.0",
-  "description": "Yggdrasil Server Written in TypeScript",
+  "description": "Another Yggdrasil server written in TypeScript",
   "keywords": [
     "minecraft",
     "yggdrasil"
   ],
-  "homepage": "https://github.com/DreamOfIce/YggdrasilServer#readme",
+  "homepage": "https://github.com/DreamOfIce/Lisardggy#readme",
   "bugs": {
-    "url": "https://github.com/DreamOfIce/YggdrasilServer/issues"
+    "url": "https://github.com/DreamOfIce/Lisardggy/issues"
   },
   "license": "MIT",
   "author": "DreamOfIce",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DreamOfIce/YggdrasilServer.git"
+    "url": "git+https://github.com/DreamOfIce/Lisardggy.git"
   },
   "bin": {
-    "yggdrasil": "bin.js"
+    "lisardggy": "bin.js"
   },
   "files": [
     "dist",

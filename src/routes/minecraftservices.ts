@@ -1,10 +1,10 @@
 import fastifyReplyFrom from "@fastify/reply-from";
 import type { FastifyPluginAsync } from "fastify";
 
-import type { YggdrasilServerConfig } from "../config";
+import type { LisardggyConfig } from "../config";
 import type { FastifyInstance } from "../utils";
 
-export const minecraftservicesServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
+export const minecraftservicesServer: FastifyPluginAsync<LisardggyConfig> = async (
   fastify,
   config,
 ) => {

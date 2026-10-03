@@ -73,7 +73,7 @@ export interface SkinServerOptions {
   };
 }
 
-export interface YggdrasilServerConfig {
+export interface LisardggyConfig {
   host: string;
   port: number;
   https: false | { cert: string; key: string };
@@ -106,7 +106,7 @@ const defaultLoggerConfig = {
   file: {
     enabled: false,
     level: "info",
-    path: join(cwd(), "data", "logs", "yggdrasil"),
+    path: join(cwd(), "data", "logs", "lisardggy"),
     roll: {
       frequency: "daily",
       size: "1M",
@@ -115,7 +115,7 @@ const defaultLoggerConfig = {
   },
 } satisfies LoggerOptions;
 
-export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.object({
+export const LisardggyConfig: Schema<LisardggyConfig> = Schema.object({
   host: Schema.string().default("0.0.0.0").description("HTTP address to bind"),
   port: Schema.natural().max(65535).default(8008).description("HTTP port to listen"),
   https: Schema.union([
@@ -229,4 +229,4 @@ export const YggdrasilServerConfig: Schema<YggdrasilServerConfig> = Schema.objec
       skin: Schema.natural().min(64).step(64).default(64),
     }),
   }).description("Skin server options"),
-}).description("Yggdrasil server configuration");
+}).description("Lisardggy server configuration");

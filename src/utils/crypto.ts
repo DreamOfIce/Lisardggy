@@ -5,10 +5,10 @@ import { hash as _hash, verify as _verify, ParsedHashOptions, parseOptions } fro
 import { arrayBufferToBase64, Binary, deepEqual, omit } from "cosmokit";
 import type { FastifyBaseLogger } from "fastify";
 
-import { YggdrasilServerConfig } from "../config";
+import { LisardggyConfig } from "../config";
 
 export namespace Argon2 {
-  export const compareOptions = (hashed: string, config: YggdrasilServerConfig) => {
+  export const compareOptions = (hashed: string, config: LisardggyConfig) => {
     const parsedOptions = parseOptions(hashed);
     const currentOptions: ParsedHashOptions = {
       ...config.auth.argon2,
@@ -20,7 +20,7 @@ export namespace Argon2 {
     return deepEqual(parsedOptions, currentOptions);
   };
 
-  export const hash = (password: string, config: YggdrasilServerConfig) =>
+  export const hash = (password: string, config: LisardggyConfig) =>
     _hash(password, {
       ...config.auth.argon2,
       algorithm: 2, // Algorithm.Argon2id

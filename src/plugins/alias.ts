@@ -35,5 +35,5 @@ const plugin: FastifyPluginAsync = async (fastify) => {
 };
 
 export const aliasPlugin = fp(plugin, {
-  name: "@yggdrasil-server/alias",
+  name: "@@lisardggy/alias",
 });

@@ -3,11 +3,11 @@ import fastifyStatic from "@fastify/static";
 import type { FastifyPluginAsync } from "fastify";
 import { request } from "undici";
 
-import type { YggdrasilServerConfig } from "../config";
+import type { LisardggyConfig } from "../config";
 import { API, Textures } from "../schemas";
 import type { FastifyInstance } from "../utils";
 
-export const skinServer: FastifyPluginAsync<YggdrasilServerConfig> = async (fastify, config) => {
+export const skinServer: FastifyPluginAsync<LisardggyConfig> = async (fastify, config) => {
   const logger = fastify.log.child({}, { msgPrefix: "[skin] " });
 
   if (config.fallback.passThrough)

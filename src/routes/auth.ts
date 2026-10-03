@@ -2,8 +2,8 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import type { Dict } from "cosmokit";
 import type { FastifyPluginAsync } from "fastify";
 
-import type { YggdrasilServerConfig } from "../config";
-import { YggdrasilErrors, YggdrasilServerError } from "../error";
+import type { LisardggyConfig } from "../config";
+import { LisardggyErrors, LisardggyServerErrors } from "../error";
 import type { ProfileData } from "../plugins/database";
 import { API, type Profile } from "../schemas";
 import {
@@ -14,14 +14,14 @@ import {
   type FastifyInstance,
 } from "../utils";
 
-export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
+export const authServer: FastifyPluginAsync<LisardggyConfig> = async (
   fastify: FastifyInstance,
   config,
 ) => {
   const logger = fastify.log.child({}, { msgPrefix: "[auth] " });
   fastify.register(fastifyRateLimit, {
     ban: 0, // always return 403
-    errorResponseBuilder: () => new YggdrasilServerError(YggdrasilErrors.AuthInvalidCredential),
+    errorResponseBuilder: () => new LisardggyServerErrors(LisardggyErrors.AuthInvalidCredential),
     global: false,
     hook: "preHandler",
     keyGenerator: (req) => (req.body as Dict<string>)["username"]!,
@@ -48,7 +48,7 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
           const { username, password, clientToken = randomUUID(), requestUser } = request.body;
           const user = fastify.database.queryUserByName(username);
           if (!user || !(await Argon2.verify(password, user.hashedPwd))) {
-            throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidCredential);
+            throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidCredential);
           }
           if (!Argon2.compareOptions(user.hashedPwd, config)) {
             user.hashedPwd = await Argon2.hash(password, config);
@@ -56,7 +56,7 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
           }
           const availableProfiles = user.profiles.map((id) => {
             const p = fastify.database.queryProfile(id);
-            if (p === undefined) throw new YggdrasilServerError(`Failed to query profile ${id}`);
+            if (p === undefined) throw new LisardggyServerErrors(`Failed to query profile ${id}`);
             return profileData2Profile(p, config);
           });
           let selectedProfile: Profile | undefined;
@@ -101,17 +101,17 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
             sub: uid,
           } = fastify.jwt.verify(accessToken, { clientToken, allowOutdated: true });
           if (selectedProfile && profile.id && selectedProfile.id !== profile.id)
-            throw new YggdrasilServerError(YggdrasilErrors.AssignInvalidToken);
+            throw new LisardggyServerErrors(LisardggyErrors.AssignInvalidToken);
           let newProfile: ProfileData | undefined;
           if (selectedProfile || profile.id) {
             const id = selectedProfile?.id ?? profile.id!;
             newProfile = fastify.database.queryProfile(id);
             if (!newProfile)
-              throw new YggdrasilServerError(`Profile ${id} not found.`, {
+              throw new LisardggyServerErrors(`Profile ${id} not found.`, {
                 code: 400,
               });
             if (newProfile.uid !== uid)
-              throw new YggdrasilServerError(YggdrasilErrors.AssignInvalidProfile);
+              throw new LisardggyServerErrors(LisardggyErrors.AssignInvalidProfile);
           }
 
           const res: API.AuthServer.Refresh.Response = {
@@ -182,7 +182,7 @@ export const authServer: FastifyPluginAsync<YggdrasilServerConfig> = async (
           const { username, password } = request.body;
           const user = fastify.database.queryUserByName(username);
           if (!user || !(await Argon2.verify(password, user.hashedPwd))) {
-            throw new YggdrasilServerError(YggdrasilErrors.AuthInvalidCredential);
+            throw new LisardggyServerErrors(LisardggyErrors.AuthInvalidCredential);
           }
 
           if (!Argon2.compareOptions(password, config)) {

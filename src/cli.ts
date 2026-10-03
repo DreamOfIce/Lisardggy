@@ -5,13 +5,13 @@ import { cosmiconfig } from "cosmiconfig";
 import { paramCase, pick } from "cosmokit";
 
 import { name, version } from "../package.json";
-import { YggdrasilServer } from "./server";
+import { Lisardggy } from "./server";
 import { deepMerge, loadConfigFromEnv, loadEnvFiles, type DeepPartial } from "./utils";
 
-export interface CommandLineOptions extends YggdrasilServer.Config {
+export interface CommandLineOptions extends Lisardggy.Config {
   config?: string;
   env?: string | string[];
-  managementApi?: YggdrasilServer.Config["managementAPI"];
+  managementApi?: Lisardggy.Config["managementAPI"];
   [k: string]: unknown;
 }
 
@@ -33,7 +33,7 @@ cli
   .option("-c, --config [filepath]", "Specify a configurstion file")
   .option("-e, --env [filepath]", "Load environment variables from file(s)");
 
-Object.entries(YggdrasilServer.Config.dict!).forEach(([k, v]) =>
+Object.entries(Lisardggy.Config.dict!).forEach(([k, v]) =>
   cli.option(
     `--${paramCase(k)}${["number", "string"].includes(v.type) ? ` [${k}]` : ""}`,
     (v.meta.description as string | undefined) ?? "",
@@ -45,11 +45,11 @@ cli.command("").action(() => {
 });
 
 cli.command("show-configs", "Show config schema and exit").action(() => {
-  console.log(YggdrasilServer.Config.toString());
+  console.log(Lisardggy.Config.toString());
   exit(0);
 });
 
-cli.command("start", "Start Yggdrasil server").action(async (options: CommandLineOptions) => {
+cli.command("start", "Start Lisardggy server").action(async (options: CommandLineOptions) => {
   loadEnvFiles(options.env);
 
   if (options["managementApi"]) {
@@ -61,7 +61,7 @@ cli.command("start", "Start Yggdrasil server").action(async (options: CommandLin
   const { config: fileConfig = {}, filepath } = ((await (options.config
     ? configExplorer.load(options.config)
     : configExplorer.search())) ?? {}) as {
-    config?: DeepPartial<YggdrasilServer.Config>;
+    config?: DeepPartial<Lisardggy.Config>;
     filepath?: string;
   };
   if (filepath) {
@@ -69,13 +69,13 @@ cli.command("start", "Start Yggdrasil server").action(async (options: CommandLin
     if (env["NODE_ENV"] === "development") console.debug("config from file:", fileConfig);
   }
 
-  const envConfig = loadConfigFromEnv("YGGDRASIL_CONFIG", YggdrasilServer.Config) ?? {};
-  const cliConfig = pick(options, Object.keys(YggdrasilServer.Config.dict!));
+  const envConfig = loadConfigFromEnv("LISARDGGY_CONFIG", Lisardggy.Config) ?? {};
+  const cliConfig = pick(options, Object.keys(Lisardggy.Config.dict!));
   const mergedConfig = deepMerge(cliConfig, envConfig, fileConfig);
   if (env["NODE_ENV"] === "development") console.debug("merged config:", mergedConfig);
 
-  console.log(`Starting Yggdrasil server v${version}...`);
-  const server = new YggdrasilServer(mergedConfig);
+  console.log(`Starting Lisardggy v${version}...`);
+  const server = new Lisardggy(mergedConfig);
   await server.start();
   process.on("SIGINT", () => void server.stop());
   process.on("SIGTERM", () => void server.stop());
