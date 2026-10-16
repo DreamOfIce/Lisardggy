@@ -103,13 +103,19 @@ export const createSkinManager = async (
         }
         const output = await img.png({ force: true }).toBuffer();
         hash = await SHA256.hash(output.buffer);
-        await writeFile(join(config.skin.savePath, `${hash}.png`), output);
-        logger.debug("texture has been saved to %s.png", hash);
+        if (!Reflect.has(skins, hash)) {
+          await writeFile(join(config.skin.savePath, `${hash}.png`), output);
+          logger.debug("texture has been saved to %s.png", hash);
+        } else {
+          logger.debug("texture %s already exists", hash);
+        }
       }
-      await this.remove(id, type);
-      profile.skin.lastUpdate = Math.floor(Date.now() / 1000);
-      profile.skin.textures[type] = { hash, metadata };
-      logger.debug("Set %s of profile %s to %s.png", type, id, hash);
+      if (profile.skin.textures[type]?.hash !== hash) {
+        await this.remove(id, type);
+        profile.skin.lastUpdate = Math.floor(Date.now() / 1000);
+        profile.skin.textures[type] = { hash, metadata };
+        logger.info("Set %s of profile %s to %s.png", type, id, hash);
+      }
     },
     async remove(id, type) {
       const profile = database.queryProfile(id);
