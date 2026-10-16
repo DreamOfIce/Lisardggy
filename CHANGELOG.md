@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.1.1](https://github.com/DreamOfIce/Lisardggy/compare/v0.1.0...v0.1.1) (2026-10-16)
+
+### Bug Fixes
+
+- fix an issue when upload a skin repeatedly ([161c18e](https://github.com/DreamOfIce/Lisardggy/commit/161c18e59e6b07739966c88f12d3e39247e0a707))
+
 ## 0.1.0 (2026-10-03)
 
 ### Features
